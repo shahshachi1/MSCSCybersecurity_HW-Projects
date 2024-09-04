@@ -1,0 +1,35 @@
+com.shachishah.smarthomegesturecontrol.test.app-runtime-release-0 /home/shachis/.gradle/caches/transforms-4/152d60101eb6d1d36197cfd941bad18d/transformed/runtime-release/res
+com.shachishah.smarthomegesturecontrol.test.app-ui-test-junit4-release-1 /home/shachis/.gradle/caches/transforms-4/2216f6abbc752d6934b807bdee4618a4/transformed/ui-test-junit4-release/res
+com.shachishah.smarthomegesturecontrol.test.app-lifecycle-viewmodel-release-2 /home/shachis/.gradle/caches/transforms-4/259a0337011d517e314d1e806792f82c/transformed/lifecycle-viewmodel-release/res
+com.shachishah.smarthomegesturecontrol.test.app-core-runtime-2.2.0-3 /home/shachis/.gradle/caches/transforms-4/2edbddf3642764ce15a2a28cadc09cbc/transformed/core-runtime-2.2.0/res
+com.shachishah.smarthomegesturecontrol.test.app-ui-graphics-release-4 /home/shachis/.gradle/caches/transforms-4/31a4900a02f15d574677d9427c35e320/transformed/ui-graphics-release/res
+com.shachishah.smarthomegesturecontrol.test.app-ui-test-release-5 /home/shachis/.gradle/caches/transforms-4/334be2b97b655ac0dd96abd051d40e89/transformed/ui-test-release/res
+com.shachishah.smarthomegesturecontrol.test.app-ui-release-6 /home/shachis/.gradle/caches/transforms-4/3b75230a461b03ee67172882ed7dfba2/transformed/ui-release/res
+com.shachishah.smarthomegesturecontrol.test.app-core-ktx-1.13.1-7 /home/shachis/.gradle/caches/transforms-4/3cd001283fd6e40f4ac6c775a534010f/transformed/core-ktx-1.13.1/res
+com.shachishah.smarthomegesturecontrol.test.app-ui-geometry-release-8 /home/shachis/.gradle/caches/transforms-4/49df7d4bff3dda32818ce812b649fe47/transformed/ui-geometry-release/res
+com.shachishah.smarthomegesturecontrol.test.app-lifecycle-livedata-core-2.8.4-9 /home/shachis/.gradle/caches/transforms-4/50f4b802e3b329efefebce9e9a1d0657/transformed/lifecycle-livedata-core-2.8.4/res
+com.shachishah.smarthomegesturecontrol.test.app-lifecycle-runtime-release-10 /home/shachis/.gradle/caches/transforms-4/72c348b15fd610cd6badb2eebbe2a8e6/transformed/lifecycle-runtime-release/res
+com.shachishah.smarthomegesturecontrol.test.app-runtime-saveable-release-11 /home/shachis/.gradle/caches/transforms-4/77d2f29e402f7c54fe21a6707c8b0895/transformed/runtime-saveable-release/res
+com.shachishah.smarthomegesturecontrol.test.app-lifecycle-runtime-ktx-release-12 /home/shachis/.gradle/caches/transforms-4/835666d1d7692e5eae9dce399b656ca7/transformed/lifecycle-runtime-ktx-release/res
+com.shachishah.smarthomegesturecontrol.test.app-profileinstaller-1.3.1-13 /home/shachis/.gradle/caches/transforms-4/84e579c04d023f3877c8702d5f2dae1d/transformed/profileinstaller-1.3.1/res
+com.shachishah.smarthomegesturecontrol.test.app-emoji2-1.3.0-14 /home/shachis/.gradle/caches/transforms-4/8ca345f82efaa352b6ef49ab32644168/transformed/emoji2-1.3.0/res
+com.shachishah.smarthomegesturecontrol.test.app-ui-text-release-15 /home/shachis/.gradle/caches/transforms-4/8e9650edf3c7a6c9757e19defd2be609/transformed/ui-text-release/res
+com.shachishah.smarthomegesturecontrol.test.app-core-1.13.1-16 /home/shachis/.gradle/caches/transforms-4/92b70e816a6eb22b39450170a6fb0f62/transformed/core-1.13.1/res
+com.shachishah.smarthomegesturecontrol.test.app-ui-unit-release-17 /home/shachis/.gradle/caches/transforms-4/95a60868251f3a793cff4e4ac32f10ed/transformed/ui-unit-release/res
+com.shachishah.smarthomegesturecontrol.test.app-savedstate-ktx-1.2.1-18 /home/shachis/.gradle/caches/transforms-4/9d975e5eb27b8b487434d33345ef0eca/transformed/savedstate-ktx-1.2.1/res
+com.shachishah.smarthomegesturecontrol.test.app-activity-compose-1.9.1-19 /home/shachis/.gradle/caches/transforms-4/a42b06a0997444de78479a91648c78b9/transformed/activity-compose-1.9.1/res
+com.shachishah.smarthomegesturecontrol.test.app-lifecycle-process-2.8.4-20 /home/shachis/.gradle/caches/transforms-4/a595572ac24f25930bfeb08b79414971/transformed/lifecycle-process-2.8.4/res
+com.shachishah.smarthomegesturecontrol.test.app-savedstate-1.2.1-21 /home/shachis/.gradle/caches/transforms-4/b14ef59bcee33c9e6afcfab6f66953f2/transformed/savedstate-1.2.1/res
+com.shachishah.smarthomegesturecontrol.test.app-startup-runtime-1.1.1-22 /home/shachis/.gradle/caches/transforms-4/b1eec2e8a6bea06741f2020f0e1664f2/transformed/startup-runtime-1.1.1/res
+com.shachishah.smarthomegesturecontrol.test.app-lifecycle-viewmodel-ktx-2.8.4-23 /home/shachis/.gradle/caches/transforms-4/b6425f2165dfd5cf22dada47563c019d/transformed/lifecycle-viewmodel-ktx-2.8.4/res
+com.shachishah.smarthomegesturecontrol.test.app-annotation-experimental-1.4.0-24 /home/shachis/.gradle/caches/transforms-4/bc1e824ff06f2a679c28906f31fe14f7/transformed/annotation-experimental-1.4.0/res
+com.shachishah.smarthomegesturecontrol.test.app-core-1.6.1-25 /home/shachis/.gradle/caches/transforms-4/c5f3466fa1ccddbd366b24faab6d2b92/transformed/core-1.6.1/res
+com.shachishah.smarthomegesturecontrol.test.app-activity-1.9.1-26 /home/shachis/.gradle/caches/transforms-4/d5722f7b990de05bbf1079af6b51b14d/transformed/activity-1.9.1/res
+com.shachishah.smarthomegesturecontrol.test.app-customview-poolingcontainer-1.0.0-27 /home/shachis/.gradle/caches/transforms-4/da605ced148120febee380a42bf62bdd/transformed/customview-poolingcontainer-1.0.0/res
+com.shachishah.smarthomegesturecontrol.test.app-ui-util-release-28 /home/shachis/.gradle/caches/transforms-4/ddcb287e55e18bf9b525ea46b099e886/transformed/ui-util-release/res
+com.shachishah.smarthomegesturecontrol.test.app-lifecycle-viewmodel-savedstate-2.8.4-29 /home/shachis/.gradle/caches/transforms-4/e546535283aef5aa2465b6f74450e81b/transformed/lifecycle-viewmodel-savedstate-2.8.4/res
+com.shachishah.smarthomegesturecontrol.test.app-activity-ktx-1.9.1-30 /home/shachis/.gradle/caches/transforms-4/e75cdcb7bab48380308b096acb28b7b5/transformed/activity-ktx-1.9.1/res
+com.shachishah.smarthomegesturecontrol.test.app-androidTest-31 /home/shachis/Documents/ASU/CSE 535 - Mobile Computing/Project/SmartHomeGestureControl/app/build/generated/res/resValues/androidTest/debug
+com.shachishah.smarthomegesturecontrol.test.app-mergeDebugAndroidTestResources-32 /home/shachis/Documents/ASU/CSE 535 - Mobile Computing/Project/SmartHomeGestureControl/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/merged.dir
+com.shachishah.smarthomegesturecontrol.test.app-mergeDebugAndroidTestResources-33 /home/shachis/Documents/ASU/CSE 535 - Mobile Computing/Project/SmartHomeGestureControl/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/stripped.dir
+com.shachishah.smarthomegesturecontrol.test.app-debugAndroidTest-34 /home/shachis/Documents/ASU/CSE 535 - Mobile Computing/Project/SmartHomeGestureControl/app/build/intermediates/merged_res/debugAndroidTest/mergeDebugAndroidTestResources
