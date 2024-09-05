@@ -1,5 +1,0 @@
-Run the python file: 'server.py'
-Check if the python Flask server is running: 'telnet 192.168.1.230 5000'
-Connect phone (ex: Samsung Galaxy S22+) to Android Studio
-Load project
-Run project, then you should see the app run on the mobile device and you should be able to upload videos to the designated file location that was set in the python Flask server.
