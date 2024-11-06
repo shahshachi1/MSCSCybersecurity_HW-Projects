@@ -1,0 +1,617 @@
+Logical Clock Project
+
+Purpose:
+The goal of this project is to implement Lamport's logical clock algorithm upon the gRPC Project. As
+shown in Diagram A, the processes use logical clocks and follow Lamport's algorithm to coordinate.
+
+Objectives
+Learners will be able to:
+● Implement the essential functions that enforces the client-centric consistency.
+● Enforce the Monotonic Write policy, which extends the implementation of previous interfaces.
+● Enforce the Read your Write policy, which extends the implementation of previous interfaces.
+● Determine the problem statement.
+● Identify the goal of the problem statement.
+● List relevant technologies for the setup and their versions.
+● Explain the implementation processes.
+● Explain implementation results.
+● Implement Lamport’s logical clock algorithm.
+● Implement interconnected sub-interfaces in the correct location.
+● Execute the specific order of interconnected sub-interfaces.
+
+Technology Requirements
+● Access to Github
+● Python
+● gRPC
+● You are required to use the files in the "Projects Overview and Resources" page in the
+
+Directions
+
+Project Code
+Major Tasks
+1. Implement logical clock in every customer and branch process
+2. Implement Lamport’s algorithm for clock coordination among the processes
+
+1. Description
+Same as in the gRPC Project, customers use Query/Deposit/Withdraw interfaces to issue requests to
+branches, and branches use Propagate to propagate updates. Every customer Deposit/Withdraw
+request is handled by one branch which then propagates the update to the other branches.
+As illustrated in Diagram B, every process maintains its logical lock according to the happens-before
+relationship between requests 1) of the same process and 2) between send and receive of the same
+request.
+
+2. Input and Output
+The input file contains a list of Customers and Branch processes. The format of the input file is similar
+to that of the gRPC Project. Note that the “customer-request-id” parameter in the "events" uniquely
+identifies every customer request, which needs to be carried over to all the events triggered by this
+request in order to verify the happens-before relationships are correctly enforced.
+
+[ // Start of the Array of Branch and Customer processes
+	{ // Customer process #1
+		"id" : {a unique identifier of a customer},
+		"type" : “customer”,
+		" customer-requests " : [{“customer-request-id“: {unique identifier of a customer request} ,
+	"interface":{deposit | withdraw}, "money": {an integer value} }]
+	}
+	{ … } // Customer process #2
+	{ … } // Customer process #3
+	{ … } // Customer process #N
+
+	{ // Branch process #1
+	"id" : {a unique identifier of a branch},
+	“type” : “branch”
+	“balance” : {the initial amount of money stored in the branch}
+	}
+
+	{ … } // Branch process #2
+	{ … } // Branch process #3
+	{ … } // Branch process #N
+] // End of the Array of Branch and Customer processes
+
+The output will contain three parts: (1) all the events (along with their logical times) taken place on
+each customer, (2) all the events (along with their logical times) taken place on each branch, and (3)
+all the events (along with their logical times) triggered by each customer Deposit/Withdraw request.
+For clarity, order all the events from the same customer/branch/customer-request by their logical
+times in the output.
+
+[ // Start of the Customer processes
+	{ // Customer process #1
+		“id” : {a unique identifier of a customer},
+		“type”: “customer”,
+		“events”: [{ “customer-request-id”: {unique identifier of the customer request}, “logical time”: {timestamp
+		from the logical clock }} …]
+	}
+	{ … } // Customer process #2
+	{ … } // Customer process #3
+	{ … } // Customer process #N
+	// End of the Customer processes
+
+	// Start of the of Branch processes
+	{ // Branch process #1
+		“id” : {a unique identifier of a Branch},
+		“type”: “branch”,
+		“events”: [{ “customer-request-id”: {a unique identifier of the customer request that triggered this event},
+		“logical time”: { timestamp from the logical clock }} …]
+	}
+	{ … } // Branch process #2
+	{ … } // Branch process #3
+	{ … } // Branch process #N
+	// End of the Branch processes
+
+		// Start of the events across all processes
+	{ // Event #1
+		“customer-request-id” : {a unique identifier of a customer request}
+		“logical time”: [{timestamp from the logical clock } …]
+	}
+	{ … } // Event #2
+	{ … } // Event #3
+	{ … } // Event #N
+] // End of the Events
+
+Example of the Input File:
+[
+	{
+		"id": 1,
+		"type": "customer",
+		"customer-requests": 
+		[
+			{
+				" customer-request-id ": 1,
+				"interface": "deposit",
+				"money": 10
+			},
+			{
+				" customer-request-id": 2,
+				"interface": "withdraw",
+				"money": 10
+			}
+		]
+	},
+	{
+		"id": 2,
+		"type": "customer",
+		"customer-requests": [
+			{
+				"customer-request-id ": 3,
+				"interface": "deposit",
+				"money": 10
+			},
+			{
+				" customer-requests": 4,
+				"interface": "withdraw",
+				"money": 10
+			}
+		]
+	},
+	{
+		"id": 3,
+		"type": "customer",
+		"customer-requests": 
+		[
+			{
+				" customer-requests": 5,
+				"interface": "deposit",
+				"money": 10
+			},
+			{
+				" customer-requests ": 6,
+				"interface": "withdraw",
+				"money": 10
+			}
+		]
+	},
+	{
+		"id": 1,
+		"type": "branch",
+		"balance": 400
+	},
+	{
+		"id": 2,
+		"type": "branch",
+		"balance": 400
+	},
+	{
+		"id": 3,
+		"type": "branch",
+		"balance": 400
+	}
+]
+
+
+Expected Output File
+// Part 1: List all the events taken place on each customer
+[{
+	"id":1,
+	"type":"customer",
+	"events": 
+	[
+		{"customer-request-id": 1, "logical_clock": 1, "interface": "deposit", "comment": "event_sent from
+		customer 1"},
+		{"customer-request-id": 2, "logical_clock": 2, "interface": "withdraw", "comment": "event_sent from
+		customer 1"}
+	]
+},
+{
+	"id":2,
+	"type":"customer",
+	"events": 
+	[
+		{"customer-request-id": 3, "logical_clock": 1, "interface": "deposit", "comment": "event_sent from
+		customer 2"},
+		{"customer-request-id": 4, "logical_clock": 2, "interface": "withdraw", "comment": "event_sent from
+		customer 2"}
+	]
+},
+{
+	"id":3,
+	"type":"customer",
+	"events": 
+	[
+		{"customer-request-id": 5, "logical_clock": 1, "interface": "deposit", "comment": "event_sent from
+		customer 3"},
+		{"customer-request-id": 6, "logical_clock": 2, "interface": "withdraw", "comment": "event_sent from
+		customer 3"}
+	]
+}]
+
+// Part 2: List all the events taken place on each branch
+[{
+	"id": 1,
+	"type": "branch",
+	"events":
+	[{"customer-request-id": 1, "logical_clock": 2, "interface": "deposit", "comment": "event_recv from customer
+	1"},
+	{"customer-request-id": 1, "logical_clock": 3, "interface": "propogate_deposit", "comment": "event_sent to
+	branch 2"},
+	{"customer-request-id": 1, "logical_clock": 4, "interface": "propogate_deposit", "comment": "event_sent to
+	branch 3"},
+	{"customer-request-id": 3, "logical_clock": 7, "interface": "propogate_deposit", "comment": "event_recv
+	from branch 2"},
+	{"customer-request-id": 5, "logical_clock": 8, "interface": "propogate_deposit", "comment": "event_recv
+	from branch 3"},
+	{"customer-request-id": 2, "logical_clock": 9, "interface": "withdraw", "comment": "event_recv from
+	customer 1"},
+	{"customer-request-id": 2, "logical_clock": 10, "interface": "propogate_withdraw", "comment": "event_sent
+	to branch 2"},
+	{"customer-request-id": 2, "logical_clock": 11, "interface": "propogate_withdraw", "comment": "event_sent
+	to branch 3"},
+	{"customer-request-id": 4, "logical_clock": 14, "interface": "propogate_withdraw", "comment": "event_recv
+	from branch 2"},
+	{"customer-request-id": 6, "logical_clock": 15, "interface": "propogate_withdraw", "comment": "event_recv
+	from branch 3"}]
+},
+{
+	"id": 2,
+	"type": "branch",
+	"events":
+	[{"customer-request-id": 1, "logical_clock": 4, "interface": "propogate_deposit", "comment": "event_recv
+	from branch 1"},
+	{"customer-request-id": 3, "logical_clock": 5, "interface": "deposit", "comment": "event_recv from customer
+	2"},
+	{"customer-request-id": 3, "logical_clock": 6, "interface": "propogate_deposit", "comment": "event_sent to
+	branch 1"},
+	{"customer-request-id": 3, "logical_clock": 7, "interface": "propogate_deposit", "comment": "event_sent to
+	branch 3"},
+	{"customer-request-id": 2, "logical_clock": 11, "interface": "propogate_withdraw", "comment": "event_recv
+	from branch 1"},
+	{"customer-request-id": 4, "logical_clock": 12, "interface": "withdraw", "comment": "event_recv from
+	customer 2"},
+	{"customer-request-id": 4, "logical_clock": 13, "interface": "propogate_withdraw", "comment": "event_sent
+	to branch 1"},
+	{"customer-request-id": 5, "logical_clock": 14, "interface": "propogate_deposit", "comment": "event_recv
+	from branch 3"},
+	{"customer-request-id": 4, "logical_clock": 15, "interface": "propogate_withdraw", "comment": "event_sent
+	to branch 3"},
+	{"customer-request-id": 6, "logical_clock": 18, "interface": "propogate_withdraw", "comment": "event_recv
+	from branch 3"}]
+},
+{
+	"id": 3,
+	"type": "branch",
+	"events":
+	[{"customer-request-id": 5, "logical_clock": 2, "interface": "deposit", "comment": "event_recv from customer
+	3"},
+	{"customer-request-id": 5, "logical_clock": 3, "interface": "propogate_deposit", "comment": "event_sent to
+	branch 1"},
+	{"customer-request-id": 1, "logical_clock": 5, "interface": "propogate_deposit", "comment": "event_recv
+	from branch 1"},
+	{"customer-request-id": 5, "logical_clock": 6, "interface": "propogate_deposit", "comment": "event_sent to
+	branch 2"},
+	{"customer-request-id": 3, "logical_clock": 8, "interface": "propogate_deposit", "comment": "event_recv
+	from branch 2"},
+	{"customer-request-id": 2, "logical_clock": 12, "interface": "propogate_withdraw", "comment": "event_recv
+	from branch 1"},
+	{"customer-request-id": 6, "logical_clock": 13, "interface": "withdraw", "comment": "event_recv from
+	customer 3"},
+	{"customer-request-id": 6, "logical_clock": 14, "interface": "propogate_withdraw", "comment": "event_sent
+	to branch 1"},
+	{"customer-request-id": 4, "logical_clock": 16, "interface": "propogate_withdraw", "comment": "event_recv
+	from branch 2"},
+	{"customer-request-id": 6, "logical_clock": 17, "interface": "propogate_withdraw", "comment": "event_sent
+	to branch 2"}]
+}]
+
+// Part 3: List all the events (along with their logical times) triggered by each customer Deposit/Withdraw
+request
+[{"id": 1,"customer-request-id":1,"type": "customer","logical_clock": 1,"interface": "deposit","comment":
+"event_sent from customer 1"},
+{"id": 1,"customer-request-id":1,"type": "branch","logical_clock": 2,"interface": "deposit","comment":
+"event_recv from customer 1"},
+{"id": 1,"customer-request-id":1,"type": "branch","logical_clock": 3,"interface":
+"propogate_deposit","comment": "event_sent to branch 2"},
+{"id": 2,"customer-request-id":1,"type": "branch","logical_clock": 4,"interface":
+"propogate_deposit","comment": "event_recv from branch 1"},
+{"id": 1,"customer-request-id":1,"type": "branch","logical_clock": 4,"interface":
+"propogate_deposit","comment": "event_sent to branch 3"},
+{"id": 3,"customer-request-id":1,"type": "branch","logical_clock": 5,"interface":
+"propogate_deposit","comment": "event_recv from branch 1"},
+{"id": 1,"customer-request-id":2,"type": "customer","logical_clock": 2,"interface": "withdraw","comment":
+"event_sent from customer 1"},
+{"id": 1,"customer-request-id":2,"type": "branch","logical_clock": 9,"interface": "withdraw","comment":
+"event_recv from customer 1"},
+{"id": 1,"customer-request-id":2,"type": "branch","logical_clock": 10,"interface":
+"propogate_withdraw","comment": "event_sent to branch 2"},
+{"id": 2,"customer-request-id":2,"type": "branch","logical_clock": 11,"interface":
+"propogate_withdraw","comment": "event_recv from branch 1"},
+{"id": 1,"customer-request-id":2,"type": "branch","logical_clock": 11,"interface":
+"propogate_withdraw","comment": "event_sent to branch 3"},
+{"id": 3,"customer-request-id":2,"type": "branch","logical_clock": 12,"interface":
+"propogate_withdraw","comment": "event_recv from branch 1"},
+{"id": 2,"customer-request-id":3,"type": "customer","logical_clock": 1,"interface": "deposit","comment":
+"event_sent from customer 2"},
+{"id": 2,"customer-request-id":3,"type": "branch","logical_clock": 5,"interface": "deposit","comment":
+"event_recv from customer 2"},
+{"id": 2,"customer-request-id":3,"type": "branch","logical_clock": 6,"interface":
+"propogate_deposit","comment": "event_sent to branch 1"},
+{"id": 2,"customer-request-id":3,"type": "branch","logical_clock": 7,"interface":
+"propogate_deposit","comment": "event_sent to branch 3"},
+{"id": 1,"customer-request-id":3,"type": "branch","logical_clock": 7,"interface":
+"propogate_deposit","comment": "event_recv from branch 2"},
+{"id": 3,"customer-request-id":3,"type": "branch","logical_clock": 8,"interface":
+"propogate_deposit","comment": "event_recv from branch 2"},
+{"id": 2,"customer-request-id":4,"type": "customer","logical_clock": 2,"interface": "withdraw","comment":
+"event_sent from customer 2"},
+{"id": 2,"customer-request-id":4,"type": "branch","logical_clock": 12,"interface": "withdraw","comment":
+"event_recv from customer 2"},
+{"id": 2,"customer-request-id":4,"type": "branch","logical_clock": 13,"interface":
+"propogate_withdraw","comment": "event_sent to branch 1"},
+{"id": 1,"customer-request-id":4,"type": "branch","logical_clock": 14,"interface":
+"propogate_withdraw","comment": "event_recv from branch 2"},
+{"id": 2,"customer-request-id":4,"type": "branch","logical_clock": 15,"interface":
+"propogate_withdraw","comment": "event_sent to branch 3"},
+{"id": 3,"customer-request-id":4,"type": "branch","logical_clock": 16,"interface":
+"propogate_withdraw","comment": "event_recv from branch 2"},
+{"id": 3,"customer-request-id":5,"type": "customer","logical_clock": 1,"interface": "deposit","comment":
+"event_sent from customer 3"},
+{"id": 3,"customer-request-id":5,"type": "branch","logical_clock": 2,"interface": "deposit","comment":
+"event_recv from customer 3"},
+{"id": 3,"customer-request-id":5,"type": "branch","logical_clock": 3,"interface":
+"propogate_deposit","comment": "event_sent to branch 1"},
+{"id": 3,"customer-request-id":5,"type": "branch","logical_clock": 6,"interface":
+"propogate_deposit","comment": "event_sent to branch 2"},
+{"id": 1,"customer-request-id":5,"type": "branch","logical_clock": 8,"interface":
+"propogate_deposit","comment": "event_recv from branch 3"},
+{"id": 2,"customer-request-id":5,"type": "branch","logical_clock": 14,"interface":
+"propogate_deposit","comment": "event_recv from branch 3"},
+{"id": 3,"customer-request-id":6,"type": "customer","logical_clock": 2,"interface": "withdraw","comment":
+"event_sent from customer 3"},
+{"id": 3,"customer-request-id":6,"type": "branch","logical_clock": 13,"interface": "withdraw","comment":
+"event_recv from customer 3"},
+{"id": 3,"customer-request-id":6,"type": "branch","logical_clock": 14,"interface":
+"propogate_withdraw","comment": "event_sent to branch 1"},
+{"id": 1,"customer-request-id":6,"type": "branch","logical_clock": 15,"interface":
+"propogate_withdraw","comment": "event_recv from branch 3"},
+{"id": 3,"customer-request-id":6,"type": "branch","logical_clock": 17,"interface":
+"propogate_withdraw","comment": "event_sent to branch 2"},
+{"id": 2,"customer-request-id":6,"type": "branch","logical_clock": 18,"interface":
+"propogate_withdraw","comment": "event_recv from branch 3"}]
+
+To assist in valifating the implementation of the Logical Clock, there are three checker scripts that you can run locally to verify each part of the output.
+● checker_part_1.py: validates the customer process (part 1):
+import json
+import sys
+
+if len(sys.argv) < 2:
+    print("Input argument?")
+    exit()
+
+filename = sys.argv[1]
+# Read the JSON data from a file
+# with open('customer_events.json', 'r') as file:
+with open(filename, 'r') as file:
+    json_data = file.read()
+
+# Parse the JSON data
+parsed_data = json.loads(json_data)
+
+# Initialize counters
+correct_answers = 0
+total_answers = 0
+
+# Check if logical clocks are incremental for each customer
+for customer_data in parsed_data:
+    customer_id = customer_data["id"]
+    events = customer_data["events"]
+    logical_clock = 0  # Initialize logical clock for the customer
+    
+    print(f"Customer ID: {customer_id}")
+    for event in events:
+        request_id = event["customer-request-id"]
+        event_logical_clock = event["logical_clock"]
+        
+        if event_logical_clock > logical_clock:
+            print(f"  Event ID: {request_id}, Logical Clock: {event_logical_clock} (OK)")
+            logical_clock = event_logical_clock
+            correct_answers += 1
+        else:
+            print(f"  Event ID: {request_id}, Logical Clock: {event_logical_clock} (Error: Not incremental)")
+        
+        total_answers += 1
+
+# Print the summary message
+print(f"\nSummary: {correct_answers} out of {total_answers} answers are correct.")
+
+● checker_part_2.py: validates the branch process (part 2):
+import json
+import sys
+
+if len(sys.argv) < 2:
+    print("Input argument?")
+    exit()
+
+filename = sys.argv[1]
+
+# Define a function to check if events meet the specified conditions
+def check_event_conditions(event, branch_data):
+    global total_events  # Use the global variable
+    total_events += 1
+    current_clock = event["logical_clock"]
+    branch_logical_clock, propagate_event_occurred = branch_data
+
+    # Check if logical clock is incremental within the same branch
+    if current_clock <= branch_logical_clock:
+        return False
+
+    # Check if non-propagate events are before propagate events
+    if not event["interface"].startswith("propagate_") and propagate_event_occurred:
+        return False
+
+    if event["interface"].startswith("propagate_"):
+        propagate_event_occurred = True
+
+    branch_logical_clock = current_clock
+
+    return True
+
+# Initialize a global variable for total events
+total_events = 0
+
+# Read the JSON data from a file
+with open(filename, 'r') as file:
+    json_data = file.read()
+
+# Parse the JSON data
+parsed_data = json.loads(json_data)
+
+# Create a dictionary to group events by branch ID
+branch_events = {}
+
+# Initialize counters for correct and incorrect events
+correct_events = 0
+incorrect_events = 0
+
+# Group the events by branch ID and perform checks
+for branch_data in parsed_data:
+    branch_id = branch_data["id"]
+    events = branch_data["events"]
+
+    if branch_id not in branch_events:
+        branch_events[branch_id] = {"events": events, "logical_clock": -1, "propagate_event_occurred": False}
+
+    # Check events within each branch
+    for event in events:
+        branch_data = (branch_events[branch_id]["logical_clock"], branch_events[branch_id]["propagate_event_occurred"])
+        if check_event_conditions(event, branch_data):
+            print(f"Branch ID: {branch_id}, Event ID: {event['customer-request-id']} - Conditions Met (OK)")
+            correct_events += 1
+        else:
+            print(f"Branch ID: {branch_id}, Event ID: {event['customer-request-id']} - Conditions Not Met (Error)")
+            incorrect_events += 1
+
+        # Update the logical clock
+        branch_events[branch_id]["logical_clock"] = event["logical_clock"]
+
+# Print the total number of events
+
+# Print a summary of correct and incorrect events
+print("\nSummary:")
+print(f"\nTotal Events: {total_events}")
+print(f"Correct Events: {correct_events}")
+print(f"Incorrect Events: {incorrect_events}")
+
+
+● checker_part_3.py: validates ALL events (part 3):
+import json
+import sys
+
+if len(sys.argv) < 2:
+    print("Input argument?")
+    exit()
+
+filename = sys.argv[1]
+# Read JSON data from a file
+with open(filename, 'r') as file:
+    events = json.load(file)
+
+
+# Sort the events by the "logical_clock" attribute
+sorted_events = sorted(events, key=lambda event: event['logical_clock'])
+
+def check_condition(event, customer_requests):
+    request_id = event["customer-request-id"]
+
+    if request_id not in customer_requests:
+        customer_requests[request_id] = {"branches": {}}
+
+    customer_request = customer_requests[request_id]
+    branch_id = event["id"]
+
+    if branch_id not in customer_request["branches"]:
+        customer_request["branches"][branch_id] = {"last_logical_clock": 0}
+
+    current_clock = event["logical_clock"]
+    branch = customer_request["branches"][branch_id]
+
+    # Check if logical clock is incremental within the same request and branch
+    if current_clock < branch["last_logical_clock"]:
+        return False
+
+    branch["last_logical_clock"] = current_clock
+
+    if event["interface"].startswith("propogate"):
+        # If the event is a propagate event, store it for later comparison
+        customer_request["propagate_events"] = event
+    else:
+        # Check if non-propagate events happen before propagate events
+        if "propagate_events" in customer_request and current_clock > customer_request["propagate_events"]["logical_clock"]:
+            return False
+
+    return True
+
+customer_requests = {}
+correct_events = 0
+total_events = 0
+incorrect_events = 0
+
+for event in sorted_events:
+    total_events += 1
+    if (check_condition(event, customer_requests)):
+        correct_events += 1
+        print(f"customer-request-id: {event['customer-request-id']} - Condition met (OK)")
+    else:
+        incorrect_events += 1
+        print(f"customer-request-id: {event['customer-request-id']} - Condition not met (Error)")
+
+
+print("\nSummary:")
+print(f"\nTotal Events: {total_events}")
+print(f"Correct Events: {correct_events}")
+print(f"Incorrect Events: {incorrect_events}")
+
+Execution Commands:
+To run the scripts, use the following command in your terminal: python checker_part_1.py test_1.json
+Follow this command format for the other checker scripts as well.
+Important: For this validation, you’ll need to manually divide your output.json file into three separate JSON files, corresponding to each part.
+
+Expected Correct Output
+Running the checker scripts should yield the following summaries if everything is correct:
+Checker Script 1 (Customer Process):
+'Summary: 8 out of 8 customer answers are correct.'
+
+Checker Script 2:
+'Summary:
+Branch Total Events: 56
+Branch Correct Events: 56
+Branch Incorrect Events: 0'
+
+Checker Script 3 (All Events):
+'Summary:
+Total Events: 64
+Correct Events: 64
+Incorrect Events: 0'
+
+Formatting Specifications
+Naming convention for your project files and usage with the input file:
+● The server file should be named server.py, all required servers should be able to start with this
+command python server.py input.json (execution command to start servers)
+● Client file should be named client.py, client file should execute with python client.py
+input.json.
+
+Protobuf: proto file should be inside the protos folder (e.g., protos/banks.proto). The expected file
+Protobuf: proto file should be inside the protos folder (e.g., protos/banks.proto). The expected file
+structure (excludes files generated after running proto file) should be like this:
+├──protos
+├──├──banks.proto
+├──banks_pb2.py
+├──banks_pb2_grpc.py
+├──input.json
+├──server.py
+├──client.py
+├──customer.py
+├──branch.py
+├──output.json
+
+Please create banks.proto, server.py, client.py, client.py, customer.py, branch.py and generate output.json files with the expected output.
+Remember that the output.json file must be 946 lines in-total including []; 8 Customer Events , 56 Branch Events and 64 Total Events.
+
+
+
+There are 4 cusomters in this bank as described in the input.json file with IDs 1, 2, 3, 4. Each start with 400. When each either deposits, that is one request. For that one deposit, that bank has to propogate/update to the other banks that the customer either deposited/withdrew, which is another 3 events. Then, for each of the other banks that propogated/updated the cusomter's event, they need to update back to the customer's bank, which is the last 3 events. Totalling in (1 request event + 6 propogate/update events = 7 total) events per customer. And since each of the 4 cusomters have to do both a deposit AND a withdraw with the same method, that's a total of 4 deposits and 4 withdraws, 7*8=56 total events:
+
+Cusomter 1: deposits 10 (1 request) --> B1 updates B2, B3, B4 (each is one request, so 3 requests). Then B2, B3, B4 updates back to B1 (each is one request, so 3 more requests). So, for the number of requests for cusomter/ID 1 is (1+3+3) 7 total requests.
+Cusomter 1: withdraws 10 (1 request) --> B1 updates B2, B3, B4 (each is one request, so 3 requests). Then B2, B3, B4 updates back to B1 (each is one request, so 3 more requests). So, for the number of requests for cusomter/ID 1 is (1+3+3) 7 total requests.
+Cusomter 2: deposits 10 (1 request) --> B2 updates B1, B3, B4 (each is one request, so 3 requests). Then B1, B3, B4 updates back to B2 (each is one request, so 3 more requests). So, for the number of requests for cusomter/ID 1 is (1+3+3) 7 total requests.
+Cusomter 2: withdraws 10 (1 request) --> B2 updates B1, B3, B4 (each is one request, so 3 requests). Then B1, B3, B4 updates back to B2 (each is one request, so 3 more requests). So, for the number of requests for cusomter/ID 1 is (1+3+3) 7 total requests.
+Cusomter 3: deposits 10 (1 request) --> B3 updates B1, B2, B4 (each is one request, so 3 requests). Then B1, B2, B4 updates back to B3 (each is one request, so 3 more requests). So, for the number of requests for cusomter/ID 1 is (1+3+3) 7 total requests.
+Cusomter 3: withdraws 10 (1 request) --> B3 updates B1, B2, B4 (each is one request, so 3 requests). Then B1, B2, B4 updates back to B3 (each is one request, so 3 more requests). So, for the number of requests for cusomter/ID 1 is (1+3+3) 7 total requests.
+Cusomter 4: deposits 10 (1 request) --> B4 updates B1, B2, B3 (each is one request, so 3 requests). Then B1, B2, B3 updates back to B4 (each is one request, so 3 more requests). So, for the number of requests for cusomter/ID 1 is (1+3+3) 7 total requests.
+Cusomter 4: withdraws 10 (1 request) --> B4 updates B1, B2, B3 (each is one request, so 3 requests). Then B1, B2, B3 updates back to B4 (each is one request, so 3 more requests). So, for the number of requests for cusomter/ID 1 is (1+3+3) 7 total requests.

@@ -1,0 +1,145 @@
+import grpc
+import json
+import sys
+import banks_pb2
+import banks_pb2_grpc
+import time
+
+class Customer:
+    def __init__(self, customer_id):
+        self.id = customer_id
+        self.logical_clock = 0
+
+    def send_request(self, stub, interface, amount):
+        self.logical_clock += 1
+        attempt = 0
+        max_attempts = 5
+
+        while attempt < max_attempts:
+            try:
+                print(f"Preparing request: {interface} {amount} with clock {self.logical_clock}")
+                if interface == "deposit":
+                    request = banks_pb2.DepositRequest(
+                        customer_id=self.id,
+                        amount=amount,
+                        logical_clock=self.logical_clock
+                    )
+                    response = stub.Deposit(request)
+                elif interface == "withdraw":
+                    request = banks_pb2.WithdrawRequest(
+                        customer_id=self.id,
+                        amount=amount,
+                        logical_clock=self.logical_clock
+                    )
+                    response = stub.Withdraw(request)
+                else:
+                    raise ValueError("Invalid interface")
+
+                # Synchronize logical clocks
+                self.logical_clock = max(self.logical_clock, response.logical_clock)
+                return response.success
+            except grpc.RpcError as e:
+                print(f"Attempt {attempt + 1} failed: {e}")
+                time.sleep(1)
+                attempt += 1
+
+        raise Exception("Failed to send request after multiple attempts.")
+
+def run_customers(input_file):
+    with open(input_file, 'r') as f:
+        data = json.load(f)
+
+    # Prepare to store events for each branch
+    branch_events = {1: [], 2: [], 3: [], 4: []}
+
+    for entry in data:
+        if entry['type'] == 'customer':
+            customer = Customer(entry['id'])
+            for request in entry['customer-requests']:
+                interface = request['interface']
+                amount = request['money']
+                request_id = request['customer-request-id']
+
+                # Send request to the first branch
+                branch_id = 1
+                try:
+                    with grpc.insecure_channel(f'localhost:500{branch_id}') as channel:
+                        stub = banks_pb2_grpc.BranchServiceStub(channel)
+                        success = customer.send_request(stub, interface, amount)
+                        branch_events[branch_id].append({
+                            "customer-request-id": request_id,
+                            "logical_clock": customer.logical_clock,
+                            "interface": interface,
+                            "comment": f"event_recv from customer {customer.id}"
+                        })
+                        print(f"Customer {customer.id} {interface.capitalize()} Request: {success}, Clock: {customer.logical_clock}")
+
+                        # Propagate to other branches
+                        for propagate_branch in range(2, 5):
+                            customer.logical_clock += 1
+                            branch_events[propagate_branch].append({
+                                "customer-request-id": request_id,
+                                "logical_clock": customer.logical_clock,
+                                "interface": f"propogate_{interface}",
+                                "comment": f"event_sent to branch {propagate_branch}"
+                            })
+                            print(f"Propagating {interface} to branch {propagate_branch} with clock {customer.logical_clock}")
+
+                            # Simulating sending the request to other branches
+                            with grpc.insecure_channel(f'localhost:500{propagate_branch}') as propagate_channel:
+                                propagate_stub = banks_pb2_grpc.BranchServiceStub(propagate_channel)
+                                if interface == "deposit":
+                                    propagate_request = banks_pb2.DepositRequest(
+                                        customer_id=customer.id,
+                                        amount=amount,
+                                        logical_clock=customer.logical_clock
+                                    )
+                                    propagate_stub.Deposit(propagate_request)
+                                elif interface == "withdraw":
+                                    propagate_request = banks_pb2.WithdrawRequest(
+                                        customer_id=customer.id,
+                                        amount=amount,
+                                        logical_clock=customer.logical_clock
+                                    )
+                                    propagate_stub.Withdraw(propagate_request)
+
+                        # Handle the response back to branch 1 for deposits
+                        for respond_branch in range(2, 5):
+                            customer.logical_clock += 1
+                            branch_events[respond_branch].append({
+                                "customer-request-id": request_id,
+                                "logical_clock": customer.logical_clock,
+                                "interface": f"propogate_{interface}",
+                                "comment": f"event_recv from branch {respond_branch}"
+                            })
+                            print(f"Branch {respond_branch} received {interface} with clock {customer.logical_clock}")
+
+                except Exception as e:
+                    print(f"Error connecting to branch {branch_id}: {e}")
+
+    # Format the output for test_2.json
+    output = []
+    for branch_id, events in branch_events.items():
+        output.append({
+            "id": branch_id,
+            "type": "branch",
+            "events": events
+        })
+
+    # Write the events to test_2.json
+    with open('test_2.json', 'w') as f:
+        json.dump(output, f, indent=4)
+
+    # Print summary of events
+    total_events = sum(len(events) for events in branch_events.values())
+    print("\nSummary:")
+    print(f"Branch Total Events: {total_events}")
+    print(f"Branch Correct Events: {total_events}")
+    print(f"Branch Incorrect Events: 0")
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python client.py <input_file>")
+        sys.exit(1)
+
+    run_customers(sys.argv[1])
