@@ -1,0 +1,181 @@
+Introduction to Negative Selection
+
+Project Description:
+In this project, you will implement a negative selection algorithm and study its performance. As an introduction, this project will focus specifically on the datasets from the Textor paper. In particular, you will use the Textor algorithm to classify English and non-English strings for a variety of non-English languages.
+
+Project goals:
+	1. Use the negative selection algorithm on the Textor examples
+	2. Classify languages and report the results
+
+Project question overview:
+	1. Write a function to calculate the final anomaly score for each language. Question 1
+	2. Write a function to calculate the false positive and true positive rates for each language. Question 2
+	3. Write a function to calculate the area under the ROC curve for each language. Question 3
+
+Implementing Negative Selection: 
+The negative selection algorithm is trivial to implement, but if not done carefully the detector generation process can be computationally intensive. In this project, we will use an efficient version of the algorithm that is available here: http://johannes-textor.name/negativeselection.html. The .jar file as well as the source code will also be available for use in the negsel_src directory. You may wish to refer to the paper: “Negative selection algorithms on strings with efficient training and linear-time classification,” for more information on the algorithm.
+
+Classifying languages:
+To test the algorithm, first, you will replicate the experiment described in Section 4.1 of the Textor reading “A comparative study of negative selection based anomaly detection in sequence data.” This experiment attempts to distinguish between strings written in two different languages, both using the same alphabet.
+First, you will train an artificial immune repertoire using fixed-length strings taken from the English-language book Moby Dick. Then, you will expose this repertoire to both English-language strings and strings from another language, which will be the “anomalies.” If the algorithm is tuned well, it should distinguish the English-language strings from those of the other language.
+The training data is in the file negsel_src/tests/english.train. The data consists of non-overlapping substrings of length 10 taken from the text. All letters are converted to lower case and contiguous strings of non-letters are collapsed to a single underline character. The data are organized into strings of length 10. The testing data are in the directory negsel_src/tests/ and are as follows:
+• hiligaynon.test,
+• middle-english.test,
+• plautdietsch.test,
+• and xhosa.test
+For each testing set, a subset of the strings is English and therefore non-anomalous. Since each test file contains 124 lines of English and 500 lines of the anomalous language, there is only one required file for labeling. In this file, each line has a corresponding label, 0 for non-anomalous (i.e. English strings) and 1 for anomalous strings (i.e. non-English strings). This file is in the directory negsel_src/tests/ and is named labels.test.
+
+Algorithm execution details:
+The negative selection algorithm is given as a java executable file (.jar). To run this within a Python notebook we will need to start a subprocess. A subprocess allows us to run external programs and then read their output into the Python code.
+To start a subprocess, we will first need to import the subprocess module and the run and PIPE submodules. Then, we will need to run the process with an array of arguments and the opened input file. We will use the Textor example (here) to demonstrate how subprocesses work.
+The following command trains the negative selection algorithm on the english.train data set and tests on the hiligaynon.test data set.
+java -jar negsel.jar -c -n 10 -r 4 -self english.train < hiligaynon.test 
+The flags used here invoke the algorithm that counts the matching detectors and uses 4-contiguous detectors on the sample strings of length 10.
+The following is a description of all of the available flags for execution:
+• -n : length of strings in self set
+• -r : number of contiguous detectors
+• -o : offset into strings
+• -d : add to alphabets the digits from 0 to ...
+• -g : print debug information
+• -v : invert match (like grep)
+• -b : subtract baseline noise
+• -c : count matching detectors instead of binary match
+• -l : output logarithms instead of actual values
+• -k : use r-chunk instead of r-contiguous matching
+• -p : output k-th component of matching profile (0 for full profile)
+• -self : file containing self set (1 string per line)
+• -alphabet : file containing alphabet; default: infer (uses all characters from "self" file as alphabet)
+
+To run this subprocess, we will need to first build an argument list from the command. This allows the subprocess command to parse the command and flags. Using the command given above, we will construct the following argument list.
+args = ['java', '-jar', 'negsel_src/negsel.jar', '-c', '-n', '10', '-r','4', '-self', 'negsel_src/tests/english.train']
+Next, we will need to open the test file to read from. This step is necessary as the argument list will not recognize the redirection from stdin (< hiligaynon.test).
+input_file = open('negsel_src/tests/hiligaynon.test', 'r')
+Finally, we can use the run submodule to call the command and pipe the output.
+result = run(args, stdout=PIPE, stdin=input_file, universal_newlines=True)
+The final results will be stored in result.stdout. This can be saved and parsed later as needed.
+The code below shows all of these steps put together and prints the output to the Python console.
+
+# Add your import statements
+import subprocess
+
+from subprocess import run, PIPE
+##declare arguments list
+args = ['java', '-jar', '/usercode/negsel_src/negsel.jar','-c','-n','10','-r','4', '-self', '/usercode/negsel_src/tests/english.train']
+
+##open input test file to read from
+input_file = open('/usercode/negsel_src/tests/hiligaynon.test', 'r')
+
+##run subprocess
+result = run(args, stdout=PIPE, stderr=PIPE, stdin=input_file, universal_newlines=True)
+
+##print results 
+print(result.stdout)
+
+
+In Textor's paper "A Comparative Study of Negative Selection Based Anomaly Detection in Sequence Data", the first evaluation methodology is centered around anomaly scores. That is each line 'x' in the test file will be assigned an anomaly score a(x)∊R which quantifies the algorithm's confidence that x is an anomaly and not in the self set. For each test set X, the final anomaly score 'a' is defined as the logsum of all of the anomaly scores in the set. That is, α=Σloga(sub i). Note that if the a(sub i) score is equal to 0, then the log is not well defined, for this reason, set all zero values to 10^-6. 
+In the prior example, we were not calculating the anomaly score. To adjust the function call to calculate the anomaly score rather than the detector count, simply remove the -c flag. The command below shows how this can be done with the previous example.
+java -jar negsel.jar -n 10 -r 4 -self english.train < hiligaynon.test
+
+Question 1
+Write the function final_anom(file) that returns the final anomaly score for a given test file using the english.train file in the test file.
+Note: You may want to use the pandas, numpy, or io package for this question. These packages are available but must be imported.
+
+import subprocess
+import numpy as np
+def final_anom(file):
+    '''
+    Function to compute the final anomaly score for a given test set.
+    Inputs:
+        file: path to the test file
+    Output:
+        score: final anomaly score that is the log sum of all anomaly scores rounded to two decimals
+    '''
+    # your code here
+    args = ['java', '-jar', '/usercode/negsel_src/negsel.jar', '-n', '10', '-r', '4', '-self', '/usercode/negsel_src/tests/english.train']
+    input_file = open(file, 'r')
+    result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=input_file, universal_newlines=True)
+    scores = [float(line) for line in result.stdout.strip().splitlines()]
+    scores = [s if s > 0 else 1e-6 for s in scores]  # replace 0 scores with 1e-6
+    score = np.sum(np.log(scores))  # logsum
+    
+    return score
+
+
+Your code should return 1410.54 for the hiligaynon test file; check that it does:
+round(final_anom('/usercode/negsel_src/tests/hiligaynon.test'),2)
+
+
+Receiver Operating Characteristic (ROC) Analysis
+The second evaluation methodology used in Textor's paper "A Comparative Study of Negative Selection Based Anomaly Detection in Sequence Data" is a receiver operating characteristic (ROC) analysis. A ROC curve is used to visualize the trade-off between specificity and sensitivity. The ROC curve is created by plotting the false positive (FP) rate and the true positive (TP) rate over an interval of values of θ. For a given value of θ the false positive rate is given by, FP(sub θ) = n(num of normal instances scroring higher than θ)/(num normal instances) and the true positive rate is given by, TP(sub θ)=(num of anomalous instances scoring higher than θ)/(num anomalous instances)
+To calculate these values, we will need to use the labeled test set mentioned prior. Recall, that this file is at the path negsel_src/tests/labels.test, and for each language test file there are 124 lines of English and 500 lines of non-English.
+
+
+Question 2:¶
+Write the function fp_tp_calc(file, theta) that returns the false positive rate and the true positive rate as a python tuple (i.e. (FPR, TPR)) for a given value of theta and an input file. For example, the following line should return the FPR for the hiligaynon.test file:
+fp_tp_calc('negsel_src/tests/hiligaynon.test', 5)[0].
+The english.train file should be used for training. Additionally, use the anomaly scoring described in the Anomaly Scoring section, also note that this question will not require you to compute a logsum.
+Note: You may want to use the pandas, numpy, or io package for this question. These packages are available but must be imported.
+
+import pandas as pd
+from sklearn import metrics
+def fp_tp_calc(file, theta):
+    '''
+    Function to calculate the false positive and true positive rate for a given test set and value of theta.
+    Inputs: 
+        file: path to the test file
+        theta: threshold value for ROC analysis
+    Output:
+        fp_tp : python tuple of the FPR and TPR given by (fp, tp)
+    '''
+    # your code here
+    args = ['java', '-jar', '/usercode/negsel_src/negsel.jar', '-n', '10', '-r', '4', '-self', '/usercode/negsel_src/tests/english.train']
+    input_file = open(file, 'r')
+    result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=input_file, universal_newlines=True)
+    scores = [float(line) for line in result.stdout.strip().splitlines()]
+    
+    labels = pd.read_csv('/usercode/negsel_src/tests/labels.test', header=None).squeeze().tolist()
+    
+    tp = sum(1 for i in range(len(scores)) if scores[i] > theta and labels[i] == 1)
+    fn = sum(1 for i in range(len(scores)) if scores[i] <= theta and labels[i] == 1)
+    fp = sum(1 for i in range(len(scores)) if scores[i] > theta and labels[i] == 0)
+    tn = sum(1 for i in range(len(scores)) if scores[i] <= theta and labels[i] == 0)
+    
+    fpr = fp / (fp + tn) if (fp + tn) != 0 else 0
+    tpr = tp / (tp + fn) if (tp + fn) != 0 else 0
+
+    return fp_tp
+
+Your code should return 0.8 and 1.0 for the test case below:
+print(round(fp_tp_calc('/usercode/negsel_src/tests/hiligaynon.test',7)[0], 2))
+print(round(fp_tp_calc('/usercode/negsel_src/tests/hiligaynon.test',7)[1], 2))
+
+
+Plotting the ROC Curve
+Recall that the ROC curve is created by plotting the false positive (FP) rate and the true positive (TP) rate over an interval of values of θ. Generally, a meaningful classifier has an area under the curve (AUC) value greater than 0.5, and a AUC value close to 1 signifies a near-perfect classifier. Additionally, the ROC curve should lie above the line y=x.
+
+Question 3:
+Write the function auc_calc(file) that calculates the AUC for a given input file where θ∈[0,10], and θ∈Z. For the purposes of grading, please use the trapezoidal rule for calculating the AUC. This can be achieved manually or by using the metrics.auc function from sklearn. This can be imported using the following command: from sklearn import metrics
+Plotting the ROC curve is optional as graphs cannot be graded, however, plotting the curve may give you additional insights.
+Note: You may want to use the pandas, numpy, or io package for this question. These packages are available but must be imported.
+
+from sklearn import metrics
+def auc_calc(file):
+    '''
+    Function to calculate the AUC for a given test set over the theta interval of [0,10].
+    Inputs: 
+        file: path to the test file
+    Output:
+        auc : area under the curve for the ROC curve of the test set
+    '''
+    # your code here
+    
+    theta_range = range(0, 11)
+    fpr_tpr = [fp_tp_calc(file, theta) for theta in theta_range]
+    
+    fprs, tprs = zip(*fpr_tpr)
+    auc = metrics.auc(fprs, tprs)
+    
+    return round(auc, 2
+
+Your code should return 0.78 for the test case below:
+round(auc_calc('/usercode/negsel_src/tests/hiligaynon.test'), 2)

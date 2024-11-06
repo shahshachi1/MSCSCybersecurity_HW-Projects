@@ -1,0 +1,425 @@
+Extensions to Balanced Colorings and Neutral Landscapes
+
+Project description:
+In this project, you will be asked to extend your last assignment in graph coloring to include finding balanced colorings and exploration of neutral coloring landscapes. Again, we will use the DEAP package in Python to handle the genetic algorithm (GA).
+
+Project goals:
+1. Use a genetic algorithm to find balanced colorings for a graph
+2. Explore the neutrality of graph colorings
+
+Project question overview:
+1. Write a fitness function for the balanced coloring problem. Question 1 here.
+2. Paste your fitness function from the Introduction to Graph Coloring Project. (not graded) Question 2 here.
+3. Write a function to calculate the 1-step neutrality of a graph. Question 3 here.
+
+Balanced Coloring Problem
+In the previous project, our goal was to find any graph coloring such that no two adjacent vertices have the same color. In the balanced coloring problem, we will keep this definition but add a second constraint. That is a coloring in which no particular color is used more than the rest. To implement this problem we will assume that the inputs and graph representation will be the same as the previous assignment. In the balanced graph coloring problem, the only thing that will change is the fitness function.
+
+To start, we will reuse the same setup from the previous assignment. This time the init_graph() function will be supplied for you.
+
+import random
+import numpy as np
+from deap import base, creator, tools, algorithms
+import math
+
+creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("Individual", list, fitness=creator.FitnessMax)
+toolbox = base.Toolbox()
+toolbox.register("attr_bool", random.randint, 0, 1)
+
+class AdjNode:
+    def __init__(self, value):
+        self.vertex = value
+        self.next = None
+
+
+class Graph:
+    def __init__(self, num, colors):
+        self.n = num
+        self.k = colors
+        self.graph = [None] * self.n
+        self.color_assignment = [None] * self.n
+        
+    def get_node(self, s):
+        return self.graph[s]
+        
+    # Add edges
+    def add_edge(self, s, d):
+        node = AdjNode(d)  # creates a new node for the destination half of the edge
+        node.next = self.graph[s]  # connects the newly-created node to the existing linked list (at the front)
+        self.graph[s] = node  # updates the graph list to include the new node (which points to the rest of the list)
+
+        node = AdjNode(s)
+        node.next = self.graph[d]
+        self.graph[d] = node
+        
+def init_graph(file):  
+    ##open file to read from
+    f = open(file, "r")
+    ##store n
+    n = int(f.readline())
+    ##store k
+    k = int(f.readline())
+    ##instantiate graph obj
+    graph = Graph(n,k)
+    
+    ##get the rest of the lines
+    while True:
+        str = f.readline()
+        ##break if line is empty
+        if not str:
+            break
+        ##add edge to graph
+        pair = str.split()
+        graph.add_edge(int(pair[0]), int(pair[1]))
+            
+    f.close()
+    return graph
+
+
+def register_ind(graph):
+    ##get value for n and k from graph
+    n = graph.n
+    k = graph.k
+    
+    ##calculate the size of each individual
+    ind_size = math.ceil(math.log2(k))*n  ##log2 means log base 2. this is also the same everywhere else too.
+    
+    ##register individual and population with toolbox
+    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_bool, n=ind_size)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+
+Fitness Function
+Recall that a balanced coloring is a coloring where no two adjacent nodes share the same color and no color is used more than others. To find such colorings, we will need to adjust the fitness function accordingly. To do so, we will add an extra penalty term to the original fitness function that will reduce the fitness of unbalanced colorings. Let G=(V,E) be a graph with 'n' nodes and 'm' edges. If c(i) is the assigned color of node 'i', then a coloring of a graph is C(G)-{c(0), c(1), ..., c(n)}. For a given edge, i, j ∈ E, let the functionδ(i, j)=1 if c(i)≠c(j), and δ(i, j)=0 if c(i)=c(j). A fitness function for the balanced coloring problem then is: F(C(G))= ((Σi,j∈E δ(i,j))/m) k∏j=1 (|Vj|)/n where |Vj| is the size of the set of all nodes of color 'j'.
+
+Question 1
+Write a fitness function eval_balance(graph, indiviudal) that computes the fitness of an individual given a graph and an individual. The input will be a graph object and a individual object. The output will be the total fitness of an individual. Use the same individual encoding scheme as in assignment 2. Remember that if ⌈log2(k)⌉ ≠ log2(k) then some color encodings will be invalid.
+
+def eval_balance(graph, individual):
+    '''
+    Function to compute the fitness of an individual for the balanced coloring problem. 
+    Inputs: 
+        individual: individual object from DEAP toolbox
+        graph: graph object containing nodes and edges
+    Outputs:
+        fitness: fitness of an individual coloring
+    '''
+    
+    # your code here
+    n = graph.n
+    m = sum(1 for i in range(n) for node in [graph.get_node(i)] if node is not None) // 2
+    k = graph.k
+    color_bits = int(math.ceil(math.log2(k)))
+    
+    # Decode individual genes into colors, check for invalid colors
+    color_assignment = []
+    has_invalid_color = False
+    for i in range(n):
+        color = int("".join(map(str, individual[i * color_bits:(i + 1) * color_bits])), 2)
+        if color >= k:  # Check if the color is invalid
+            has_invalid_color = True
+            break  # Stop further decoding since we found an invalid color
+        color_assignment.append(color)
+    
+    # If any invalid color was found, assign minimal fitness and return
+    if has_invalid_color:
+        return (0.0,)
+    
+    # Step 1: Calculate edge penalty for adjacent nodes with the same color
+    edge_penalty = 0
+    for i in range(n):
+        node = graph.get_node(i)
+        while node is not None:
+            if color_assignment[i] == color_assignment[node.vertex]:
+                edge_penalty += 1
+            node = node.next
+    edge_penalty /= 2  # Each edge is counted twice in an undirected graph
+
+    # Step 2: Calculate balance term by assessing color usage distribution
+    color_counts = [color_assignment.count(j) for j in range(k)]
+    balance_term = 1
+    for count in color_counts:
+        # Avoid division by zero if no nodes are assigned a color
+        balance_term *= (count / n) if n > 0 else 0
+    
+    # Step 3: Combine edge penalty and balance term into the final fitness calculation
+    if m > 0:
+        fitness = ((m - edge_penalty) / m) * balance_term
+    else:
+        # Handle cases where the graph has no edges
+        fitness = balance_term
+    
+    
+    return (fitness,)
+
+
+Your code should return (0.03125,) for input [0, 1, 0, 0, 1, 0, 0, 1]
+
+graph = init_graph("/usercode/graphs/graph_1.txt")
+register_ind(graph)
+
+ind = creator.Individual([0, 1, 0, 0, 1, 0, 0, 1])
+
+eval_balance(graph, ind)
+
+
+Evolving the population
+Now that we have all of the necessary functions to create a graph and calculate the fitness of an individual, we can create our population and allow it to evolve. Similar to previous project, there are 4 graphs provided. We will need to write a main function that takes a path to the graph file and finds the coloring with the highest fitness.
+
+def main(file):
+    import numpy
+    
+    graph = init_graph(file)
+    register_ind(graph)
+    
+    toolbox.register("evaluate", eval_balance, graph)
+    toolbox.register("mate", tools.cxTwoPoint)
+    toolbox.register("mutate", tools.mutFlipBit, indpb=0.10)
+    toolbox.register("select", tools.selTournament, tournsize=3)
+    
+    pop = toolbox.population(n=50)
+    hof = tools.HallOfFame(1)
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", numpy.mean)
+    stats.register("min", numpy.min)
+    stats.register("max", numpy.max)
+    
+    pop, logbook = algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=30, stats=stats, halloffame=hof, verbose=True)
+    
+    return pop, logbook, hof
+
+
+if __name__ == "__main__":
+    pop, log, hof = main("/usercode/graphs/graph_2.txt")
+    print("Best individual is: %s\nwith fitness: %s" % (hof[0], hof[0].fitness))
+    
+    import matplotlib.pyplot as plt
+    gen, avg, min_, max_ = log.select("gen", "avg", "min", "max")
+    plt.plot(gen, avg, label="average")
+    plt.plot(gen, min_, label="minimum")
+    plt.plot(gen, max_, label="maximum")
+    plt.xlabel("Generation")
+    plt.ylabel("Fitness")
+    plt.legend(loc="lower right")
+    plt.show()
+
+
+Neutral Landscapes
+In this section of the project, we will explore the neutrality of graph colorings. A mutation to an individual is neutral if it does not affect the fitness of that individual.
+
+First, you will need to implement 1-step neutrality. That is, starting with a single valid coloring, make copies in which one gene is changed to one of the other valid colors. Performing this process should produce n*(k-1) individuals. You will then report the fraction of those individuals that have the same fitness as the original coloring.
+
+Question 2
+Below, you will copy and paste your eval_graph(graph, individual) function from assignment 2 to use as a helper function for question 3.
+
+def eval_graph(graph, individual):
+    '''
+    Function to compute the fitness of an individual for the graph coloring problem. 
+    Inputs: 
+        individual: individual object from DEAP toolbox
+        graph: graph object containing nodes and edges
+    Outputs:
+        fitness: fitness of an individual coloring
+    '''
+    
+    # your code here
+    n = graph.n
+    k = graph.k
+    color_assignment = [0] * n
+    color_bits = int(math.ceil(math.log2(k)))
+    
+    # Decode individual genes into colors
+    for i in range(n):
+        color_assignment[i] = int("".join(map(str, individual[i * color_bits:(i + 1) * color_bits])), 2) % k
+
+    # Penalty for adjacent nodes with the same color
+    edge_penalty = 0
+    for i in range(n):
+        node = graph.get_node(i)
+        while node is not None:  # Traverse adjacency list
+            if color_assignment[i] == color_assignment[node.vertex]:
+                edge_penalty += 1
+            node = node.next  # Move to the next adjacent node
+    edge_penalty /= 2  # Each edge counted twice
+
+    # Final fitness calculation
+    m = sum(1 for i in range(n) for node in [graph.get_node(i)] if node is not None) // 2
+    fitness = (m - edge_penalty) / m
+    
+    return (fitness,)
+
+
+Question 3
+Write the function one_neutral(graph, individual) that computes the neutrality of single mutations (the fraction of mutations that result in the same fitness that the original coloring produced). The inputs will be a graph object and an individual object and the output will be the neutrality.
+
+
+def one_neutral(graph, individual):
+    '''
+    Function to compute the neutrality of a graph. 
+    Inputs: 
+        individual: individual object from DEAP toolbox
+        graph: graph object containing nodes and edges
+    Outputs:
+        neutrality: neutrality of the graph
+    '''
+    
+    # your code here
+    original_fitness = eval_graph(graph, individual)[0]
+    n = graph.n
+    k = graph.k
+    color_bits = int(math.ceil(math.log2(k)))
+    total_mutations = n * (k - 1)
+    neutral_mutations = 0
+
+    # Test each gene mutation for neutrality
+    for i in range(n):
+        original_color = int("".join(map(str, individual[i * color_bits:(i + 1) * color_bits])), 2) % k
+        for new_color in range(k):
+            if new_color != original_color:
+                # Create a new individual with the mutated color
+                mutated_individual = individual[:]
+                new_color_bits = list(format(new_color, f'0{color_bits}b'))
+                mutated_individual[i * color_bits:(i + 1) * color_bits] = map(int, new_color_bits)
+                
+                # Check fitness
+                mutated_fitness = eval_graph(graph, mutated_individual)[0]
+                if mutated_fitness == original_fitness:
+                    neutral_mutations += 1
+
+    neutrality = neutral_mutations / total_mutations
+    
+    return neutrality
+    
+Your code should return 0.25 for input [0, 1, 0, 0, 1, 0, 0, 1]; check that it does:
+
+graph = init_graph("/usercode/graphs/graph_1.txt")
+register_ind(graph)
+
+ind = creator.Individual([0, 1, 0, 0, 1, 0, 0, 1])
+
+one_neutral(graph, ind
+
+
+
+
+
+Here are the graph text files:
+
+graph_1.txt:
+4
+3
+1 3
+0 2
+2 1
+
+graph_2.txt:
+5
+3
+1 4
+1 3
+2 0
+2 3
+3 0
+3 4
+4 0
+
+graph_3.txt:
+11
+4
+1 2
+1 4
+1 7
+1 9
+2 3
+2 6
+2 8
+3 5
+3 7
+3 10
+4 5
+4 6
+4 10
+5 8
+5 9
+6 0
+7 0
+8 0
+9 0
+10 0
+
+graph_4.txt:
+37
+4
+1 2
+1 4
+1 11
+1 13
+2 3
+2 10
+2 12
+3 6
+3 11
+3 15
+4 5
+4 10
+4 14
+5 8
+5 13
+5 17
+6 7
+6 12
+6 16
+7 9
+7 15
+7 18
+8 9
+8 14
+8 18
+9 16
+9 17
+10 20
+10 22
+11 19
+11 21
+12 20
+12 24
+13 19
+13 23
+14 22
+14 26
+15 21
+15 25
+16 24
+16 27
+17 23
+17 27
+18 25
+18 26
+19 29
+19 31
+20 28
+20 30
+21 29
+21 33
+22 28
+22 32
+23 31
+23 35
+24 30
+24 34
+25 33
+25 36
+26 32
+26 36
+27 34
+27 35
+28 0
+29 0
+30 0
+31 0
+32 0
+33 0
+34 0
+35 0
+36 0
