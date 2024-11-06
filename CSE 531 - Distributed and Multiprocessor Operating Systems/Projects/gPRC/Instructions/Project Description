@@ -1,0 +1,198 @@
+Project Description
+In the first part of this project, you will implement an interface using gRPC so that the processes can
+communicate with each other.
+
+gRPC
+The communication is implemented with the RPC that we learned in the video lecture "Remote Procedure Call" from Module 3: Communication and Coordination Part 1. We will be using the simplest type of RPC in gRPC, where the customer sends a single request and gets back a single response.
+
+1. The client process calls the method on the stub/client object, the server process is notified that the RPC has been invoked with the client’s metadata for this call, the method name, and the specified deadline if applicable.
+2. The server can then either send back its own initial metadata (which must be sent before any response) straight away, or wait for the client’s request message - which happens first is application-specific.
+3. Once the server has the client’s request message, it does whatever work is necessary to create and populate its response. The response is then returned (if successful) to the client together with status details (status code and optional status message) and optional trailing metadata.
+4. If the status is OK, the client then gets the response, which completes the call on the client
+side.
+The gRPC Quick Start Guide explains the basic Python programmer’s introduction to working with
+gRPC using a simple program. We strongly encourage you to refer to this resource.
+
+Customer and Branch Processes
+The basic templates for Customer and Branch processes are provided as “Customer.py” and “Branch.py”. Learners are expected to complete the function Customer.createStub and Customer.executeEvents in the Customer.py and use it to generate Customer processes. Customers
+use the Customer.createStub to communicate with the Branch process with the ID identical to the Customer. Customer.executeEvents processes the events from the list of events stored in the Customer class and submits the request to the Branch process. Additionally, learners are expected to complete the Branch.MsgDelivery of the Branch.py and use it to
+generate Branch processes. Branch.MsgDelivery processes the requests received from other processes and returns results to the requested process. Learners should complete the described functions and the Customer and Branch to complete this assignment.
+
+Branch to Customer Interface
+Branch.MsgDelivery receives the request from the Customer process. The Branch process should decrease or increase its amount of money, Branch.balance, according to the Customer’s request. The
+customer stubs of the Branches are stored as a list in the Branch.stubList of the Branch class.
+
+➔ Branch.Query interface reads the value from the Branch.balance and returns the result back to the Customer process.
+➔ Branch.Withdraw interface decreases the Branch.balance with the amount specified in the
+Client’s request, propagates the request to its fellow branches, and returns success / fail to the Customer process.
+➔ Branch.Deposit interface increases the Branch.balance with the amount specified in the Client’s request, propagates the request to its fellow branches, and returns success / fail to the Customer process.
+
+
+Branch to Branch Interface
+Branch.MsgDelivery receives the request from its fellow branches that propagate the updates. The Branch process should decrease or increase its replica, Branch.balance, according to the branches' request.
+
+➔ Branch.Propogate_Withdraw interface decreases the Branch.balance with the amount
+specified in the Branch’s request and returns success / fail to the Branch process.
+➔ Branch.Propogate_Deposit interface increases the Branch.balance with the amount specified in the Branch’s request and returns success / fail to the Branch process.
+
+Input and Output
+The input file contains a list of Customers and Branch processes. For each customer process, it specifies the list of events that it will execute. All the events will be executed in the order specified by
+their unique identifiers. For each branch process, it specifies its initial account balance, which should be the same across all branches.
+You need to implement a main program to launch and execute the Customer and Branch processes according to the input file. In this project, we assume that there are no concurrent operations to the bank account. Therefore, the customers in fact execute sequentially one by one, and you can use a sleep command before launching a new Customer process to wait for all the operations performed by the previous customer on one branch to be propagated to the other branches.
+
+[ // Start of the Array of Branch and Customer processes
+{ // Customer process #1
+    "id" : {a unique identifier of a customer},
+    "type" : “customer”,
+    "events" : [{"interface":{deposit | withdraw}, "money": {an integer value}, “id“: {unique identifier of an event} }, {"interface":{query}, “id“: {unique identifier of an event} } ]
+}
+{ … } // Customer process #2
+{ … } // Customer process #3
+{ … } // Customer process #N
+{ // Branch process #1
+    "id" : {a unique identifier of a branch},
+    “type” : “branch”
+    “balance” : {the initial amount of money stored in the branch}
+}
+{ … } // Branch process #2
+{ … } // Branch process #3
+{ … } // Branch process #N
+] // End of the Array of Branch and Customer processes
+
+The output contains the list of successful responses that the Customer processes have received from
+the Branch processes.
+
+[ // Start of the Array of Customer processes
+   { // Customer process #1
+     “Id” : { a unique identifier of a customer }
+     “recv” {a list of successful returns of the events from the Branch process}
+}
+{ … } // Customer process #2
+{ … } // Customer process #3
+{ … } // Customer process #N
+] // End of the Array of Customer processes
+
+Below is an example input file and the expected output file. Note that the final query event sleeps for
+three seconds to guarantee all the updates are propagated among the Branch processes.
+
+Example of the input file
+[
+  {
+    "id" : 1,
+    "type" : "customer",
+    "events" : [{ “id”: 1, "interface":"query" }]
+},
+{
+	"id" : 2,
+	"type" : "customer",
+	"events" : [{ “id”: 2, "interface":"deposit", "money": 170 },{ “id”: 3, "interface":"query" }]
+},
+{
+	"id" : 3,
+	"type" : "customer",
+	"events" : [{ “id”: 4, "interface":"withdraw", "money": 70 },{ “id”: 5, "interface":"query" }]
+},
+{
+	"id" : 1,
+	"type" : "branch",
+	"balance" : 400
+},
+{
+	"id" : 2,
+	"type" : "branch",
+	"balance" : 400
+},
+{
+	"id" : 3,
+	"type" : "branch",
+	"balance" : 400
+}
+]
+Expected output file:
+[{"id": 1, "recv": [{"interface": "query", "balance": 400}]}
+, {"id": 2, "recv": [{"interface": "deposit", "result": "success"}, {"interface": "query", "balance": 570}]},
+{"id": 3, "recv": [{"interface": "withdraw", "result": "success"}, {"interface": "query", "balance": 500}]}]
+
+All the customer and branch processes should be terminated after all the events specified in the input
+file are executed.
+
+Formatting Specifications
+Naming convention for project files and usage with the input file:
+● The server file should be named server.py, all required servers should be able to start with this
+command python server.py input.json (execution command to start servers)
+● Client file should be named client.py, client file should execute with python client.py
+input.json.
+Protobuf: The proto file should be inside the protos folder (e.g., protos/banks.proto). The expected
+file structure (excludes files generated after running proto file) should be like this:
+├──protos
+├──├──banks.proto
+├──input.json
+├──server.py
+├──client.py
+├──customer.py
+├──branch.py
+├──output.json
+
+Here is the template branch.py
+import grpc
+import example_pb2
+import example_pb2_grpc
+
+class Branch(example_pb2_grpc.RPCServicer):
+
+    def __init__(self, id, balance, branches):
+        # unique ID of the Branch
+        self.id = id
+        # replica of the Branch's balance
+        self.balance = balance
+        # the list of process IDs of the branches
+        self.branches = branches
+        # the list of Client stubs to communicate with the branches
+        self.stubList = list()
+        # a list of received messages used for debugging purpose
+        self.recvMsg = list()
+        # iterate the processID of the branches
+
+        # TODO: students are expected to store the processID of the branches
+        pass
+
+    # TODO: students are expected to process requests from both Client and Branch
+    def MsgDelivery(self,request, context):
+        pass
+
+
+And here is the template for customer.py
+import grpc
+import example_pb2
+import example_pb2_grpc
+import time
+
+class Customer:
+    def __init__(self, id, events):
+        # unique ID of the Customer
+        self.id = id
+        # events from the input
+        self.events = events
+        # a list of received messages used for debugging purpose
+        self.recvMsg = list()
+        # pointer for the stub
+        self.stub = None
+
+    # TODO: students are expected to create the Customer stub
+    def createStub(self):
+        pass
+
+    # TODO: students are expected to send out the events to the Bank
+    def executeEvents(self):
+        pass
+
+
+Test Case
+This component of the project is auto-graded and worth 40% of your project grade.
+Your output file will be checked that operations have been performed successfully. (Review the
+"Expected output file" in the project directions for reference.)
+
+50 customers and 50 branches and 100 total operations in two (2) rounds:
+● Criteria 1: In the first round, the returned balance should increase with the customer ID
+● Criteria 2: In the second round, it should decrease with the customer ID.
+● Criteria 3: The final balance should be the same as the initial balance, which is 400.
