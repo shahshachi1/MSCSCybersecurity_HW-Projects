@@ -36,6 +36,7 @@ class Customer:
 
         self.logical_clock = max(self.logical_clock, response.logical_clock)
 
+        # Log customer event for test_1.json
         customer_event = {
             "customer-request-id": request_id,
             "logical_clock": self.logical_clock,
@@ -86,6 +87,7 @@ def run_customers(input_file):
                 branch_events[1].append(primary_event)
                 all_events.append({**primary_event, "id": 1, "type": "branch"})
 
+                # Propagate to other branches and log each step
                 for propagate_branch in branch_ports.keys():
                     if propagate_branch != 1:
                         stub = branch_stubs[propagate_branch]
@@ -138,39 +140,35 @@ def run_customers(input_file):
     with open('test_3.json', 'w') as f:
         json.dump(all_events, f, indent=4)
 
-    # Combine all test files into one sorted output
     combine_test_outputs()
 
     print("\nSummary:")
     print(f"Customer events written to test_1.json")
     print(f"Branch events written to test_2.json")
     print(f"All events written to test_3.json")
-    print(f"Combined events written to output.json")
+    print("Combined output written to output.json")
 
 def combine_test_outputs():
-    combined_events = []
+    combined_output = []
 
+    # Load and structure data from test_1.json (customers)
     with open('test_1.json', 'r') as f:
         test_1_data = json.load(f)
-        for customer in test_1_data:
-            for event in customer["events"]:
-                combined_events.append({**event, "id": customer["id"], "type": "customer"})
+        combined_output.extend(test_1_data)  # Keep customer structure as is
 
+    # Load and structure data from test_2.json (branches)
     with open('test_2.json', 'r') as f:
         test_2_data = json.load(f)
-        for branch in test_2_data:
-            for event in branch["events"]:
-                combined_events.append({**event, "id": branch["id"], "type": "branch"})
+        combined_output.extend(test_2_data)  # Keep branch structure as is
 
+    # Load events from test_3.json and add directly as objects to combined_output
     with open('test_3.json', 'r') as f:
         test_3_data = json.load(f)
-        combined_events.extend(test_3_data)
+        combined_output.extend(test_3_data)  # Append individual events at the end
 
-    # Sort all events by logical clock
-    combined_events.sort(key=lambda x: x["logical_clock"])
-
+    # Write the combined output to output.json
     with open('output.json', 'w') as f:
-        json.dump(combined_events, f, indent=4)
+        json.dump(combined_output, f, indent=4)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
