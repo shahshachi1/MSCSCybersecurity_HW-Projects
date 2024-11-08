@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package bank;
+
+// Bank service definition with RPC methods for deposit, withdraw, query, and update propagation.
+service Bank {
+    rpc Deposit (DepositRequest) returns (DepositResponse);
+    rpc Withdraw (WithdrawRequest) returns (WithdrawResponse);
+    rpc Query (QueryRequest) returns (QueryResponse);
+    rpc ReceiveUpdate (UpdateRequest) returns (UpdateResponse); // Used for propagating updates
+}
+
+// Request and response messages for deposit operation
+message DepositRequest {
+    int32 customer_id = 1;
+    int32 event_id = 2;
+    int32 amount = 3;
+    int32 dest = 4;
+}
+message DepositResponse {
+    bool success = 1;
+    int32 balance = 2;
+}
+
+// Request and response messages for withdraw operation
+message WithdrawRequest {
+    int32 customer_id = 1;
+    int32 event_id = 2;
+    int32 amount = 3;
+    int32 dest = 4;
+}
+message WithdrawResponse {
+    bool success = 1;
+    int32 balance = 2;
+}
+
+// Request and response messages for query operation
+message QueryRequest {
+    int32 customer_id = 1;
+    int32 event_id = 2;
+    int32 dest = 3;
+}
+message QueryResponse {
+    int32 balance = 1;
+}
+
+// Request and response messages for propagating updates to other branches
+message UpdateRequest {
+    int32 event_id = 1;
+    int32 balance_change = 2;
+}
+message UpdateResponse {
+    bool success = 1;
+}
