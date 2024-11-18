@@ -1,0 +1,445 @@
+Modeling Collective Behavior in Ants
+
+Project description:
+In this project, you will translate the simple ordinary differential equation (ODE) model as described in the Pratt lecture into an agent-based model. You will explore the implementation of agent-based models in Python by using the Mesa package and compare your results to those from the ODE model.
+
+Project goals:
+	1. Learn how to convert an ODE model to an agent-based model.
+	2. Demonstrate the ability to create an agent-based model using the Mesa package
+
+Project question overview:
+	1. Write the Ant agent class to complete the agent-based model. Question 1
+
+Please run the below code to install the appropriate libraries:
+import time
+import numpy as np
+import importlib
+import sys
+import pandas as pd
+import random
+from patsy import highlevel
+from mesa import Agent, Model
+from mesa.time import SimultaneousActivation
+from mesa.space import MultiGrid
+from mesa.datacollection import DataCollector
+import math
+import sys
+from ggplot import *
+from ggplot import ggplot
+
+Agent-based Modeling
+Agent-based models are used to simulate many actors or "agents" and their actions and interactions. These models differ from ODE models in that rather than averaging the behaviors across actors in the model, each actor is a distinct part of the model and acts according to a specified set of rules. These actors respond to both the environment and other actors within the system. Often, these models are used to simulate epidemics in which the actors represent humans and the interaction between sick individuals and healthy individuals allows for the epidemic to spread. In this project, the actors will be ants and rather than becoming infected with a disease, these ants will be influenced by recruitment via tandem running.
+
+Forager Behavior Problem and Model
+Forager Experiment
+As described in the "Collective Cognition in Ant Societies" lecture by Dr. Stephen Pratt, a simple feeder experiment can be used to demonstrate how ants collectively select a food source. In this experiment, as shown in Figure 1, two feeders are placed equidistant from a colony nest. Then, the exploration and tandem-running behaviors of ants can be observed. Ants explore the presence of the two feeders and perform tandem runs to recruit ants to the stronger feeder. Please refer to Dr. Pratt's lecture for variations and more details on this experiment.
+
+Forager Model (ODE)
+As shown in Figure 2, Pratt defines a model in which the ants can be in one of three states: (1) uncommitted to a feeder; (2) committed to feeder A; and (3) committed to feeder B. In this model, every ant must be in one of these three states at any time step. To describe how ants transition between states, Pratt introduces β,α and λ parameters. The parameters α(sub A) and α(sub B) describe the rate at which the uncommitted ants discover feeder A and feeder B respectively. In addition to independent discovery, ants can also be recruited by interacting with those ants who have committed to either feeder. This recruitment happens at the rate β(sub A) for feeder A and β(sub B) for feeder B. Finally, ants are not necessarily committed to a single feeder for the duration of the experiment and may return to the uncommitted state at an attrition rate of λ(sub A) for feeder A and λ(sub B) for feeder B.
+(See image Figure 1 and Figure 2)
+
+Model Implementation
+In this project, we will use the Mesa Python package to implement our agent-based model. This project will be largely based on the introductory tutorial provided by Mesa and can be found here as well as an implementation for pheromone laying ants by Mark Goadrich which can be found on GitHub here.
+
+From ODE to Agent-based
+A Mesa simulation consists of two main classes, one for the model and the other for the agents. Each agent contains information about the state of the individual as well as how one instance of an agent may interact with another. The model class contains information such as the general parameters, and the grid the agents move on, and keeps track of the agents in their current state.
+
+The first step in converting an ODE model into an agent-based model is to establish an environment for the agents to exist in. The grid below shows the environment we will be using for this project. The grid is 50×50 in dimension and the origin is located at the bottom left. The nest is at the location (25, 5) and the strong and weak feeder are at locations (10, 40) and (40, 40) respectively. The class that holds this model is given in the model section here (see image figure 3).
+
+Agent Classes
+Now that we have established some background on where exactly these ants will be searching for food, let's take a look at the four agent classes that comprise our model.
+
+Environment Agent
+The Environment agents will work as a placeholder to give each cell on the grid a unique identifier and position. This class is given to you below. In the model class, one Environment agent will be placed on each cell. These agents do not move or have any other properties. However, they will come in handy when the ant needs to look at which cells are available to move to.
+
+class Environment(Agent):
+
+    def __init__(self, unique_id, pos, model):
+        super().__init__(unique_id, model)
+        self.pos = pos
+
+    def get_pos(self):
+        return self.pos
+
+#The environment agent is placed on each cell as a place holder. 
+
+Nest Agent
+The Nest agent records the location of the nest. The nest will be placed on the grid at location (25, 5). This agent class is given to you below.
+
+class Nest(Agent):
+    '''
+    The ant nest.
+    '''
+    def __init__(self, unique_id, pos, model):
+        '''
+        Records the unique_id with the super, and saves the pos.
+        '''
+        super().__init__(unique_id, model)
+        self.pos = pos
+
+
+Food Agent
+The food agents represent the two feeders on the map. Each agent has a unique ID, position, and amount of food. The constructor initializes the amount of food to 0 and the model class adds 100 units of food to each feeder. The add(amount) method adds a specified amount of food to the feeder. The eaten() method is used by the ants to consume one food unit from the feeder. The any_food() class returns a boolean indicating if there is food remaining in the feeder.
+
+
+class Food(Agent):
+    '''
+    A food cache for the ants, recording how much food is available.
+    '''
+    def __init__(self, unique_id, model):
+        '''
+        Records the unique_id with the super.
+        Initializes the food amount to 0.
+        '''
+        super().__init__(unique_id, model)
+        self.amount = 0
+        
+    def add(self, amount):
+        '''
+        Add the amount to the food amount
+        '''
+        self.amount += amount
+        
+    def eaten(self):
+        '''
+        Removes one food if there are any available.
+        '''
+        if self.any_food():
+            self.amount -= 1
+    
+    def any_food(self):
+        '''
+        Returns a bool to show if there is any food available
+        '''
+        return self.amount > 0 
+
+
+Ant Agent
+The final agent class defines the primary agents of the model, that is they will be moving and interacting with the other agents. As shown in the ODE model, each ant has three states as follows:
+
+Uncommitted,
+Committed to Feeder A,
+and Committed to Feeder B.
+Note that one of the main assumptions of this model, and the ODE model, is that all ants are explorers and have the ability to recruit other ants.
+
+The ant class will consist of however many methods you decide you need to complete the requirements listed under Question 1. You are expected to write these methods as detailed below.
+
+
+Question 1
+This is the only question of the project, but it may take some time to complete accurately. It will require you to write the complete Ant agent class. It is strongly recommended that you refer to the pheromone laying ants model by Mark Goadrich which can be found on GitHub here. This will provide insight into how the Mesa package can be applied to this problem.
+
+Constructor
+The constructor will meet the following criteria:
+	1. The starting position of each ant is the nest location;
+	2. Each ant is initialized in the "UNCOMMITTED" state;
+	3. Each ant is initialized with its tandem running flag equal to 0.
+
+step() Method
+Since the ants will be moving with the help of a scheduler, this method will determine how each ant moves on each step depending on its current state and its tandem running flag. Figure 7 (shown below) gives a flow chart describing how the ant will move depending on its state. The red boxes with rounded edges denote states, the diamond shapes denote conditionals, and the black boxes with vertical lines denote actions.
+
+All ants begin in the uncommitted state. If an ant is UNCOMMITTED, it first checks if it is currently at a food source. If it is at a food source it commits to this food source with probability α(sub A) or α(sub B) depending on which feeder it is at. If it is not currently at a food source, or cannot commit due to the alpha parameters, it moves one cell in a random direction. In the ant commits to a food source, its state changes to either "COMMITTED A" or "COMMITTED B" depending on which feeder it is currently at. This sub-process is shown in the flow chart in Figure 4.
+
+Once an ant commits to a food source, it also attempts to uncommit with probability λ(sub A) or λ(sub B) for feeder A and feeder B respectively. If it stays committed, then the ant's state remains committed as before.
+
+If the ant is currently tandem running and not at a food source, it will move in the direction of the cell closest to the food source ("food move" in the figure). If the ant is currently tandem running and already at a food source it will eat the food, stop tandem running, and return to the committed state. This subprocess is shown in Figure 5 for only feeder A. The feeder B process is identical and shown in Figure 7.
+
+
+Next, if the ant is committed to a food source but not tandem running, it will look for a recruit. An ant can recruit another ant if they share the same cell and the potential recruit is in the uncommitted state. If an ant finds a recruit at the current step it will recruit the ant with probability β(sub A) or β(sub B) for feeder A or feeder B, depending on which feeder it is committed to. To complete successful recruitment, the ant will commit the recruit to its feeder and set both itself and the recruit's tandem running flag to true. Figure 6 shows this process for feeder A, the process is the same for feeder B and can be seen in figure 7.
+
+Figure 7 shows all of the subprocesses together to create the entire step() method.
+
+Ant Agent
+The final agent class defines the primary agents of the model, that is they will be moving and interacting with the other agents. As shown in the ODE model, each ant has three states as follows:
+
+Uncommitted,
+Committed to Feeder A,
+and Committed to Feeder B.
+Note that one of the main assumptions of this model, and the ODE model, is that all ants are explorers and have the ability to recruit other ants.
+
+The ant class will consist of however many methods you decide you need to complete the requirements listed under Question 1. You are expected to write these methods as detailed below.
+
+
+Question 1
+This is the only question of the project, but it may take some time to complete accurately. It will require you to write the complete Ant agent class. It is strongly recommended that you refer to the pheromone laying ants model by Mark Goadrich which can be found on GitHub here. This will provide insight into how the Mesa package can be applied to this problem.
+
+Constructor
+The constructor will meet the following criteria:
+
+The starting position of each ant is the nest location;
+Each ant is initialized in the "UNCOMMITTED" state;
+Each ant is initialized with its tandem running flag equal to 0.
+step() Method
+Since the ants will be moving with the help of a scheduler, this method will determine how each ant moves on each step depending on its current state and its tandem running flag. Figure 7 (shown below) gives a flow chart describing how the ant will move depending on its state. The red boxes with rounded edges denote states, the diamond shapes denote conditionals, and the black boxes with vertical lines denote actions.
+
+All ants begin in the uncommitted state. If an ant is UNCOMMITTED, it first checks if it is currently at a food source. If it is at a food source it commits to this food source with probability 
+ or 
+ depending on which feeder it is at. If it is not currently at a food source, or cannot commit due to the alpha parameters, it moves one cell in a random direction. In the ant commits to a food source, its state changes to either "COMMITTED A" or "COMMITTED B" depending on which feeder it is currently at. This sub-process is shown in the flow chart in Figure 4.
+
+Forwarding
+Figure 4: Flow chart for ant movement from initial state to committed state
+
+Once an ant commits to a food source, it also attempts to uncommit with probability 
+ or 
+ for feeder A and feeder B respectively. If it stays committed, then the ant's state remains committed as before.
+
+If the ant is currently tandem running and not at a food source, it will move in the direction of the cell closest to the food source ("food move" in the figure). If the ant is currently tandem running and already at a food source it will eat the food, stop tandem running, and return to the committed state. This subprocess is shown in Figure 5 for only feeder A. The feeder B process is identical and shown in Figure 7.
+
+Forwarding
+Figure 5: Flow chart for ant movement once it is committed to feeder A and tandem running.
+
+Next, if the ant is committed to a food source but not tandem running, it will look for a recruit. An ant can recruit another ant if they share the same cell and the potential recruit is in the uncommitted state. If an ant finds a recruit at the current step it will recruit the ant with probability 
+ or 
+ for feeder A or feeder B, depending on which feeder it is committed to. To complete successful recruitment, the ant will commit the recruit to its feeder and set both itself and the recruit's tandem running flag to true. Figure 6 shows this process for feeder A, the process is the same for feeder B and can be seen in figure 7.
+
+Forwarding
+Figure 6: Flow chart for ant movement once committed to feeder A and not tandem running.
+
+Figure 7 shows all of the subprocesses together to create the entire step() method.
+
+Forwarding
+Figure 7: Flow chart for ant movement and states
+
+get_distance(pos_1, pos_2) Function
+This helper function is given to you, feel free to use it (or don't) in your solution. When moving towards a food source, you will need to minimize the distance across all neighboring cells and the target food source.
+
+# from sugarscape_cg
+def get_distance(pos_1, pos_2):
+    """ 
+    Get the distance between two point
+    Args:
+        pos_1, pos_2: Coordinate tuples for both points.
+    """
+    x1, y1 = pos_1
+    x2, y2 = pos_2
+    dx = x1 - x2
+    dy = y1 - y2
+    return math.sqrt(dx ** 2 + dy ** 2)
+
+class Ant(Agent):
+    '''
+    The ants wander randomly around the world in search of food. 
+    If the ants find food, they commit to the feeder and attempt to recruit other ants.
+    '''
+    # your code here
+    def __init__(self, unique_id, nest, model):
+        '''
+        Initialize the ant with a unique ID, its starting position (the nest),
+        an uncommitted state, and its tandem running flag set to False.
+        '''
+        super().__init__(unique_id, model)
+        self.state = "UNCOMMITTED"
+        self.tandem_running = False
+        self.pos = nest.pos  # Start at the nest position
+
+    def move_randomly(self):
+        '''
+        Move the ant one cell in a random direction.
+        '''
+        possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
+        new_position = self.random.choice(possible_steps)
+        self.model.grid.remove_agent(self)  # Remove the agent from the current position
+        self.model.grid.place_agent(self, new_position)  # Place the agent in the new position
+    
+    def move_towards(self, target_pos):
+        '''
+        Move towards the target position (food source).
+        '''
+        possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
+        closest_step = min(possible_steps, key=lambda step: get_distance(step, target_pos))
+        self.model.grid.remove_agent(self)  # Remove the agent from the current position
+        self.model.grid.place_agent(self, closest_step)  # Place the agent in the closest step
+    
+    def uncommitted_behavior(self):
+        '''
+        Behavior for uncommitted ants: Explore randomly or commit to a food source.
+        '''
+        cellmates = self.model.grid.get_cell_list_contents([self.pos])
+        food_sources = [agent for agent in cellmates if isinstance(agent, Food)]
+        
+        if food_sources:
+            food = food_sources[0]
+            if food == self.model.foods[0] and self.random.random() < self.model.alpha_A:
+                self.state = "COMMITTED A"
+            elif food == self.model.foods[1] and self.random.random() < self.model.alpha_B:
+                self.state = "COMMITTED B"
+        else:
+            self.move_randomly()
+    
+    def committed_behavior(self):
+        '''
+        Behavior for committed ants: Decide to uncommit or recruit other ants.
+        '''
+        # Check for attrition
+        if self.state == "COMMITTED A" and self.random.random() < self.model.lambda_A:
+            self.state = "UNCOMMITTED"
+            self.uncommitted_behavior()
+            return
+        elif self.state == "COMMITTED B" and self.random.random() < self.model.lambda_B:
+            self.state = "UNCOMMITTED"
+            self.uncommitted_behavior()
+            return
+        
+        # If tandem running, move towards the feeder or stop running
+        if self.tandem_running:
+            target_food = self.model.foods[0] if self.state == "COMMITTED A" else self.model.foods[1]
+            if self.pos == target_food.pos:
+                target_food.eaten()
+                self.tandem_running = False
+            else:
+                self.move_towards(target_food.pos)
+        else:
+            # Attempt to recruit one uncommitted ant
+            self.recruit()
+    
+    def recruit(self):
+        '''
+        Attempt to recruit one uncommitted ant to the same feeder.
+        '''
+        cellmates = self.model.grid.get_cell_list_contents([self.pos])
+        uncommitted_ants = [agent for agent in cellmates if isinstance(agent, Ant) and agent.state == "UNCOMMITTED"]
+        
+        if uncommitted_ants:
+            recruit = self.random.choice(uncommitted_ants)
+            if self.state == "COMMITTED A" and self.random.random() < self.model.beta_A:
+                recruit.state = "COMMITTED A"
+                self.tandem_running = True
+                recruit.tandem_running = True
+            elif self.state == "COMMITTED B" and self.random.random() < self.model.beta_B:
+                recruit.state = "COMMITTED B"
+                self.tandem_running = True
+                recruit.tandem_running = True
+
+    def step(self):
+        '''
+        Define the ant's behavior based on its current state.
+        '''
+        if self.state == "UNCOMMITTED":
+            self.uncommitted_behavior()
+        elif "COMMITTED" in self.state:
+            self.committed_behavior()
+
+
+
+Model Class
+The Model class defines a grid and it keeps track of the agents through time. On each time step, the ants who are able to recruit new ants will do so depending on where they are in space and if another ant is available to be recruited. The DataCollector class is used to keep track of the agents. In particular, the data collector records the amount of food in each feeder at every time step.
+
+Additionally, the grid is an instance of the MultiGrid class. We opt to use the MultiGrid class because it allows multiple agents to occupy a single cell simultaneously. If ants were not allowed to come into contact with each other, there would be no recruitment. The definition of the model class and the relevant parameter values are set for you. The simulation ends when one feeder is completely depleted. In this case, we expect feeder A to be depleted much faster than feeder B.
+
+Parameter Values
+The parameter values come from the article "Linear Recruitment Leads to Allocation and Flexibility in Collective Foraging by Ants" as discussed in Dr. Pratt's lecture. These values were a result of fitting the ODE model to real data. Note that in the article, one time step was equal to one minute whereas, in our simulation, one time step is equal to one second. For this reason, the parameter values were all multiplied by 60. Additionally, our simulation will have 100 ants.
+
+class AntModel(Model):
+    '''A model for ant foraging.'''
+    
+    def __init__(self, N=100, width=50, height=50, alpha_A = 0.0125*60, alpha_B = 0.0125*60, 
+               beta_A = 0.015*60, beta_B = 0.006*60, lambda_A = 0.009, lambda_B = 0.038):
+        
+        
+        super().__init__()
+        ##assign parameters to local variables
+        self.num_agents = N
+        self.alpha_A = alpha_A
+        self.alpha_B = alpha_B
+        self.beta_A = beta_A
+        self.beta_B = beta_B
+        self.lambda_A = lambda_A
+        self.lambda_B = lambda_B
+        
+        ##Set up of the grid and schedule:
+        
+        # Use SimultaneousActivation which simulates all the cells
+        # computing their next state simultaneously.  This needs to
+        # be done because each cell's next state depends on the current
+        # state of all its neighbors -- before they've changed.
+        self.schedule =  SimultaneousActivation(self)
+        
+        ##define 2-d grid
+        self.grid = MultiGrid(width, height, False)
+        
+        ##define starting positions for the nest and food locations
+        nest_loc = (25, 5)
+        self.food_locs = ((10, 40), (40, 40))
+        
+        self.nest = Nest(self.next_id(), nest_loc, self)
+        self.foods = []
+        self.grid.place_agent(self.nest, nest_loc)
+        self.schedule.add(self.nest)
+        
+        ##Add in the ants
+        ##create agents
+        for i in range(self.num_agents):
+            ant = Ant(self.next_id(), self.nest, self) ##instantiate agent i
+            self.grid.place_agent(ant, self.nest.pos) ##place ant in nest
+            self.schedule.add(ant) ##add ant to schedule
+            
+        ##add the food locations
+        for loc in self.food_locs:
+            food = Food(self.next_id(), self) ##instantiate food 
+            food.add(100) ##give food value
+            self.grid.place_agent(food, loc) ##place food source on grid
+            self.schedule.add(food) ##add food to schedule
+            self.foods.append(food) ##add food to local list
+            
+            
+        ##add the environment cells
+        for (contents, (x, y)) in self.grid.coord_iter():
+            cell = Environment(self.next_id(), (x,y), self)
+            self.grid.place_agent(cell, (x,y))
+            self.schedule.add(cell)
+        
+        self.running = True
+        
+        ##Record the data 
+        self.dc = DataCollector({"Feeder A:": lambda m: self.foods[0].amount,
+                               "Feeder B:": lambda m: self.foods[1].amount})
+        
+    def step(self):
+        '''Have the scheduler advance each cell by one step'''
+        
+        ##one step
+        self.schedule.step()
+        
+        ##collect data
+        self.dc.collect(self)
+        
+        ##stop when all of the food in a feeder is collected
+        if not self.foods[0].any_food() or not self.foods[1].any_food():
+            self.running = False
+
+
+Running the Model
+Running the model is straightforward. First, we create an instance of the model class, then we use the run_model() method to start the scheduler, and finally, we record the results into a data frame. This is given to you below.
+
+ants = AntModel() #create an instance of the model
+ants.run_model() #run the model
+results = ants.dc.get_model_vars_dataframe() #store the results
+
+
+Visualizing the Results
+To visualize the results, we will first print the data frame to get an idea of the number of iterations needed to complete the simulation and to see the two feeders at the end of a run. Then, we will use the data frame to plot the amount of food in each feeder over time.
+
+Ideally, you should observe that feeder A is consumed much faster than feeder B. In this section, your results will be graded. Due to the stochastic nature of the simulation, your run must be within two standard deviations of a distribution generated over 100 runs.
+
+The code to plot the results is given below:
+results["time"] = np.linspace(0, len(results) - 1, len(results))
+resultsmelt = pd.melt(results, id_vars=["time"], value_vars=["Feeder A:","Feeder B:"])
+ggplot(resultsmelt, aes(x="time", y="value", color="variable")) \
++ geom_line()
+
+
+# Run this cell to generate the csv file
+import csv
+
+times_to_complete = []
+total_iterations = 50
+
+for _ in range(total_iterations + 1):
+    ants = AntModel() #create an instance of the model
+    ants.run_model() #run the model
+    results = ants.dc.get_model_vars_dataframe() #store the results
+    times_to_complete.append(results.shape[0])
+
+# don't edit the below code
+with open('/usercode/results.csv', 'w', newline='') as csvfile:
+    csv_writer = csv.writer(csvfile)
+    csv_writer.writerow(times_to_complete)
