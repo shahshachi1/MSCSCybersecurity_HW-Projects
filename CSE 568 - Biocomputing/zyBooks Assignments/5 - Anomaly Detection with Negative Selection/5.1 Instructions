@@ -1,0 +1,300 @@
+Anomaly Detection with Negative Selection
+
+Submission Directions
+You are given an unlimited number of attempts to submit your best work. You must submit your Anomaly Detection with Negative Selection Project deliverable through zyBooks. Carefully review submission directions outlined in the overview document in order to correctly earn credit for your work. Learners may not email or use other means to submit any assignment or project for review, including feedback, and grading.
+
+The Anomaly Detection with Negative Selection Project includes three (3) deliverables as one (1) submission:
+Jupyter Notebook: The graded sections in the Jupyter Notebook are marked by the following comment: #ADD YOUR CODE HERE
+Question 1: Parse input data from a file into a standardized (binned) format.
+Question 2: Adapt your functions written for the previous assignment to handle the fact that r now varies.
+Question 3: Put all the pieces together and compute AUC over a variety of parameter values. The test cases for Q3 are split into three segments, each worth one third of the grade for this assignment (Q1 and Q2 are not individually graded).
+When you are ready, please go to zyBooks and submit your deliverables!
+
+Project description:
+In this project, you will use the same Textor algorithm from the previous project to detect anomalies in a different data set. We will use a fetal monitoring dataset (known as a cardiotocography) from the UC Irvine Machine Learning Repository.
+
+Project goals:
+	1. Apply the Textor algorithm to a practical example
+	2. Use ROC analysis to score the detector
+
+Project question overview:
+	1. Write a function to process the cardiotocography data set. Question 1
+	2. Paste any previous functions or write additional helper functions (not-graded). Question 2
+	3. Write a function to calculate AUC values over an interval of values. Question 3
+
+Cardiotocography Dataset
+A cardiotocography is a technical way to measure the fetal heart rate (FHR) and the uterine contractions (UC) during pregnancy. Obstetricians then classify these readings as either normal, suspect, and pathologic. Figure 1 shows the display of a cardiotocograph (CTG), the FHR is shown in orange and the UC is shown in green. Figure 2 shows the output of a typical CTG where the line labeled A is the FHR and the line labeled D is the UC. More details on the data set are here: http://odds.cs.stonybrook.edu/cardiotocogrpahy-dataset/.
+
+The data consists of 21 real-valued variables, outliers, and inliers. Each row is a sample, each column is an observed variable, and the training file includes the ground truth labels of the samples. The data are in: cardio_train.csv and cardio_test.csv.
+
+Data Processing
+In order for the continuous data to work well with the negative selection algorithm, we will need to bin the values into categorical variables. For consistency across assignments, we will simply bin each of the variables into 10 bins. This will produce strings of length 21 symbols and an alphabet size of 10 characters (e.g. A indicates the lowest category and J indicates the highest).
+
+Next, we will need to format the data in such a way that the new train and test data may be read directly by Textor's algorithm used in the previous project. Recall that both the train and the test data for the languages were .csv files with one string of length 10 per line. Here, we would like there to be one string of length 21 per line. These strings will correspond to the 21 variables in a row of either cardio_train.csv or cardio_test.csv.
+
+Creating Bins with pandas¶
+To avoid ambiguity in how the data can be binned, we suggest that you use the cut function from pandas. Note that this function allows for a label parameter to be passed. To map our binned data to characters we can define the labels array as follows:
+
+labels=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'].
+
+After defining labels we can call pandas.cut(x, bins=10, labels), where x is the data column.
+
+Question 1
+Write the function process_data(file) which processes either cardio_train.csv or cardio_test.csv into the format specified in the "Data Processing" section. This function returns the string processed_file which is a path to the final processed file. This function will not be directly graded but will be used in the grading of later questions. The processed file should be in .csv format with one string of length 21 per row. The final processed file should look similar to the strings below.
+
+Do not include headers or indices in your final processed file. The file should contain only strings.
+Make sure the batching of this is by columns and not rows.
+EEDAECEAACACIBJDBEDDA
+EEBAFCEAACACIBJCBEDDA
+EEBAFBEAADAEHAFGAEDDA
+EEDAFAEAADADHAFFAEDDA
+EECBFBEACBACDDDCAEDDA
+EEEEEAEACBABFBEBAEDEA
+DDDICDECBCABGBGDAFCDE
+DDCHCCEEBCABGBGBAECDC
+DDDJDCEABCACIAHCAFCDD
+DDBJDCEFBCABGAEDADCCC
+DDCJDCEDCBABHBGDBDCDB
+DDCICCEFCBABJAJFADCCB
+EEACAHEACIAAJAJFADAAF
+...
+
+import pandas as pd
+
+def process_data(file):
+    '''
+    Function to process the data in a given file. 
+    Inputs:
+        file: path to either test or train file
+    Outputs:
+        processed_file: path to processed version of the file
+    '''
+    
+    # your code here
+    
+    return processed_file
+
+
+Implementing Negative Selection Recap
+Recall from the previous project that we used a Python subprocess to use Textor's negsel.jar file. To start a subprocess, we will first need to import the subprocess module and the run and PIPE submodules. Then, we will need to run the process with an array of arguments and the opened input file. We will use the Textor example (here) to demonstrate how subprocesses work.
+
+The following command trains the negative selection algorithm on the english.train data set and tests on the hiligaynon.test data set from the previous project.
+java -jar negsel.jar -c -n 10 -r 4 -self english.train < hiligaynon.test 
+
+In this project, you will use the processed train and test data to run this same command. Recall that to run this subprocess, we will need to first build an argument list from the command. This allows the subprocess command to parse the command and flags. Using the command given above, we will construct the following argument list.
+args = ['java', '-jar', 'negsel.jar', '-c', '-n', '10', '-r','4', '-self', 'negsel_src/tests/english.train']
+
+Next, we will need to open the test file to read from. This step is necessary as the argument list will not recognize the redirection from stdin (< hiligaynon.test).
+input_file = open('negsel_src/tests/hiligaynon.test', 'r')
+Finally, we can use the run submodule to call the command and pipe the output.
+result = run(args, stdout=PIPE, stdin=input_file, universal_newlines=True)
+The final results will be stored in result.stdout. This can be saved and parsed later as needed.
+Refer to the previous project for more information on how to run the code as well as a full running example.
+REMEMBER TO ADJUST THE STRING LENGTH FOR THIS PROJECT.
+
+Exploring Model Parameterization
+In the previous project, we used r=4 contiguous bits for all of our testing. However, this does not ensure optimal anomaly detection. In this project, we will investigate the tuning of the r parameter for the r-contiguous patterns.
+
+r-contiguous Patterns
+Textor in "A Comparative Study of Negative Selection Based Anomaly Detection in Sequence Data" defines the 
+-contiguous pattern as follows:
+An r-contiguous pattern is a string d∈Σ^l. It matches another string s∈Σ^l if d and s are identical ina t least r continuous positions, i.e., if there is an i∈{1,...,l-r+1} such that the substrings of length r of s and d starting at the i-th position are equal.
+
+Scoring the Detector
+Since our strings are of length 21, we will consider r∈[2,10]. For simplicity, we will use the AUC as described in the previous project. Recall that the ROC curve is created by plotting the false positive (FP) rate and the true positive (TP) rate over an interval of values of Ө. Generally, a meaningful classifier has an area under the curve (AUC) value greater than 0.5, and an AUC value close to 1 signifies a near-perfect classifier.
+You may use the fp_tp_calc(file, theta) and auc_calc(file) functions from the previous project to calculate the AUC values. Additionally, we will let Ө∈[0,10], and Ө∈Z.
+
+Question 2: Using previous functions
+Use the answer box below to paste in any functions that you would like to use for Question 2. You may also use this area to write any additional helper functions and/or edit your old functions to generalize to this problem and dataset (i.e., by adding a new parameter to handle the fact that r is an additional input variable). Labels for this dataset may be found in the file cardio.labels. Make sure to use skikit-learn libraries to calculate the auc!
+
+## PASTE ANY FUNCTIONS YOU WOULD LIKE TO USE HERE
+# your code here
+
+
+Question 3
+Write the function r_auc_tuple(file) that calculates a list of tuples for each value of r∈[2,10] over Ө∈[0,10] for a given test file. This will result in a list of 10 tuples where the first element in each tuple is the value of r and the second element is the AUC value. This list will be returned as tuples_list and will be graded based on accuracy. The labels for the test file are in cardio.labels.
+
+For reference, the following command should return the AUC value for r=2: r_auc_tuple('cardio_test.csv')[0][1].
+Remember to use the process_data(file) function to run the Textor algorithm with the correct files.
+
+(Try to split lines into numbers to make sure you're only doing string to float conversion on one number.)
+
+import subprocess
+from subprocess import run, PIPE
+
+def r_auc_tuple(file):
+    '''
+    Function to compute the auc values for various values of r.
+    Inputs: 
+        file: path to the test file
+    Outputs:
+        tuples_list: a list of tuples where the first value in each tuple is r and the second value is the auc
+    '''
+    
+    # your code here
+    
+    return tuples_list
+
+'''
+You must run this cell.
+Check the output of your functions.
+'''
+import csv
+
+tuples = r_auc_tuple('cardio_test.csv')
+print(tuples)
+
+# don't edit the below code
+with open('/usercode/tuples.csv','w',newline='') as file:
+    writer = csv.writer(file)
+    writer.writerows(tuples)
+
+assert len(tuples) == 9
+assert round(tuples[0][1],2) == 0.75
+assert round(tuples[7][1],2) == 0.0
+print("All test cases passed")
+
+
+
+Here are my functions so far, where r=2 is so far failing, not sure if r=3 or r=4 are correct, BUT r=5, r=6, r=7, r=8, r=9, r=10 are all correct. tuples at r=2 needs to start at 0.75 but is only 0.55
+How can I make my r=2 more accurate?
+
+import csv
+import numpy as np
+from subprocess import run, PIPE, TimeoutExpired
+from sklearn.metrics import auc
+
+def process_data(file):
+    """
+    Process data from CSV into binned strings of length 21 using pure Python.
+    """
+    labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+    processed_rows = []
+
+    # Read file
+    with open(file, 'r') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            try:
+                # Convert all values in the row to floats
+                row = [float(value) for value in row]
+                row = row[1:]
+                # Bin each column value into one of 10 categories
+                bins = np.linspace(min(row), max(row), 10)  # 10 bins + 1 edge
+                binned_row = [
+                    labels[np.digitize(value, bins)-1] for value in row
+                ]
+                processed_rows.append(''.join(binned_row))  # Ensure 21 characters per line
+            except ValueError:
+                # Skip rows that cannot be converted to floats
+                print(f"Skipping invalid row: {row}")
+                continue
+
+    # Save processed file
+    processed_file = file.replace('.csv', '_processed.csv')
+    with open(processed_file, 'w') as f:
+        for line in processed_rows:
+            f.write(line + '\n')
+
+    print(f"Processed file saved as: {processed_file} with {len(processed_rows)} rows.")
+    return processed_file
+
+# Step 2: FP and TP calculation
+def fp_tp_calc(scores, theta, labels):
+    """
+    Calculate False Positive (FP) and True Positive (TP) rates for given scores and threshold.
+    """
+    fp = sum(1 for score, label in zip(scores, labels) if score >= theta and label == 0)
+    tp = sum(1 for score, label in zip(scores, labels) if score >= theta and label == 1)
+    total_neg = labels.count(0)
+    total_pos = labels.count(1)
+    fp_rate = fp / total_neg if total_neg > 0 else 0
+    tp_rate = tp / total_pos if total_pos > 0 else 0
+    return fp_rate, tp_rate
+
+# Step 3: AUC calculation using FP-TP values
+def auc_calc(fp_tp_values):
+    """
+    Calculate AUC from FP and TP rates using trapezoidal rule.
+    """
+    fp_rates, tp_rates = zip(*fp_tp_values)
+    return auc(fp_rates, tp_rates)
+
+def r_auc_tuple(file):
+    """
+    Calculate AUC values for various values of r (2 to 10) for a given test file.
+    """
+    train_file = process_data('cardio_train.csv')
+    test_file = process_data(file)
+
+    # Read labels
+    with open('cardio.labels', 'r') as f:
+        labels = [int(line.strip()) for line in f]
+
+    # Debugging: Check lengths of test file and labels
+    print(f"Number of labels: {len(labels)}")
+
+    tuples_list = []
+
+    for r in range(2, 11):
+        timeout = 120
+        args = ['java', '-jar', 'negsel.jar', '-c', '-n', '10', '-r', str(r), '-self', train_file]
+
+        with open(test_file, 'r') as input_file:
+            try:
+                result = run(args, stdout=PIPE, stdin=input_file, universal_newlines=True, timeout=timeout)
+            except TimeoutExpired:
+                print(f"Timeout expired for r={r}, skipping to the next value.")
+                continue
+
+        # Parse scores from negsel.jar output
+        scores = []
+        for line in result.stdout.splitlines():
+            for value in line.split():
+                try:
+                    scores.append(float(value))
+                except ValueError:
+                    continue
+
+        # Debugging: Check scores
+        print(f"Scores for r = {r}: {scores[:10]} (first 10 scores)")
+
+        if not scores:
+            print(f"No scores generated for r = {r}")
+            continue
+
+        # Normalize scores
+        max_score = max(scores)
+        normalized_scores = [(score / max_score) * 50 for score in scores] if max_score > 0 else [0] * len(scores)
+
+        # Debugging: Check normalized scores
+        print(f"Normalized Scores for r = {r}: {normalized_scores[:10]} (first 10 normalized)")
+
+        # Ensure scores and labels align
+        effective_length = min(len(normalized_scores), len(labels))
+        normalized_scores = normalized_scores[:effective_length]
+        labels = labels[:effective_length]
+
+        # Debugging: Check alignment
+        print(f"Effective lengths for r = {r}: {effective_length}")
+
+        # Calculate FP-TP values
+        theta_range = np.arange(0, 11, 1)
+        fp_tp_values = [fp_tp_calc(normalized_scores, theta, labels) for theta in theta_range]
+
+        # Debugging: Check FP-TP values
+        print(f"FP-TP Values for r = {r}: {fp_tp_values}")
+
+        if len(fp_tp_values) < 2:
+            print(f"Insufficient FP-TP values for r = {r}, skipping.")
+            continue
+
+        # Calculate AUC
+        try:
+            auc_value = auc_calc(fp_tp_values)
+            tuples_list.append((r, auc_value))
+        except Exception as e:
+            print(f"Error calculating AUC for r = {r}: {e}")
+            continue
+
+    return tuples_list
