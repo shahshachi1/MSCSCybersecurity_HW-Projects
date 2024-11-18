@@ -1,0 +1,142 @@
+Ant Colony Optimization for Network Route Repair¶
+
+Project description:
+In this project, you will implement the ant colony optimization algorithm described in Chandrasekhar et al. paper, "A distributed algorithm to maintain and repair the trail networks of arboreal ants," to repair breaks for various graphs. While you will not be responsible for writing the algorithm, in this project you will run experiments over different problem instances and parameterizations.
+
+Project goals:
+	1. Use and apply the ant colony optimization algorithm
+	2. Plot and evaluate your results over a series of experimental runs
+
+Project question overview:
+	1. Write a function to calculate the success rate. Question 1
+	2. Write a function to find the optimal parameterization. Question 2
+
+Ant Colony Optimization Algorithm
+The algorithm we will be using was written by Dr. Joshua Daymude and was adapted from the implementation used in Chandrasekhar et al. You have been given this program, and its path is ./trailrepair.py. We suggest that you review the Python code before running your experiments to gain a high-level understanding of what is happening under the hood.
+
+Parameterization
+As mentioned in the trail repair paper (Chandrasekhar et al.), there are both computational and biological parameters that comprise the algorithm. We will first look at the computational parameters. All parameters are passed as arguments to the Python code, that is, you first include the flag and then the parameter value. How this works will be shown later in an example. Here are the computational parameters:
+
+	-g or --g_top Graph topology, one of: [minimal | simple | medium | full | spanning | euroroad | chicago | uspower | paroad |caroad]
+	-R or --runs Number of runs
+	-T or --steps Number of time steps
+	-N or --ants Number of ants
+	-C or --cut Index of cut edge
+	-V or --size Number of vertices in subgraph samples
+
+In addition to the parameters, there are some options provided by the argument parser.
+	-E or --extra Use the variant with extra ants at the nests
+	-D or --draw Output the trail network at the specified iteration (saved to /images directory)
+F
+inally, you are given the option to adjust the three biological parameters discussed in the paper,q(sub add), q(sub decay), and q(sub explore). For more information on these parameters, please refer to the trail repair lecture or the paper. These parameters are passed to the argument parser using the following definitions.
+	-A or --add Amount of pheromone to add on a traveled edge
+	-Q or --decay Fraction of pheromone that evaporates per time step
+	-X or --explore Probability that an ant takes an explore step
+
+Reproducing Chandrasekhar Results
+In this section, we will focus on reproducing the experiments in the paper "A Distributed Algorithm to maintain and repair the trail networks of arboreal ants."
+
+Input Graph Topologies
+Recall that the original trail repair paper experimented on five graphs of increasing difficulty. These graphs are as follows: minimal graph, simple graph, medium graph, full grid, spanning graph. The paths to each respective graph are given below. For this project, you are asked to experiment with only three of them: MINIMAL, MEDIUM, and SPANNING. Note that when you pass the graph to the Python code you will not need to provide the path but rather the symbolic name from the following list: [minimal | simple | medium | full | spanning | euroroad | chicago | uspower | paroad |caroad]. Although you are asked only to submit the project for three graphs for this question, we provide access to all of them, in case you find it useful or wish to experiment on your own.
+	data/g_minimal.txt
+	data/g_simple.txt
+	data/g_medium.txt
+	data/g_full.txt
+	data/g_spanning
+
+The series of figures below shows what these topologies look like after an attempted path repair. The graphs are drawn to show only the actual edges; you may notice that this is slightly different from the visual representation shown in the paper, but the topologies are the same.
+
+Experimentation
+For this project, we will be recreating the results for success probability. In the results section of the Chandrasekhar, there is a 32×32 grid showing the results from 1024 tests run for each combination of decay and explore probabilities. Since this would longer to run than Coursera allows, we will use a 3×3 grid to create heat maps.
+
+As in the trail repair paper, we will vary the decay parameter in the interval q(decay)∈[0.01, 0.30] and the explore probability q(explore)∈[0.10, 0.40]. As for the other parameters, we will use those that are defaulted in the code. These default parameters are the same as are in the original paper.
+
+Running the Code
+You can run the code by calling Python within this notebook. The code snippet below shows how to call the code on a minimal graph topology, a decay value of 0.01, and an explore probability of 0.10.
+python3 trailrepair.py -g minimal --decay 0.01 --explore 0.10
+This code will return True if the ants successfully repaired the trail and False otherwise.
+
+Question 1:
+Your first task is to write the function success_rate(graph, decay, explore) that returns the success rate for a given graph. Just like in the paper, you will need to repeat the simulation 15 times to estimate the success rate. That is the success rate will be the total number of successes divided by 15.
+
+The following function call should return the success rate for the minimal graph topology, a decay value of 0.01, and an explore probability of 0.10.
+
+success_rate(minimal, 0.01, 0.10)
+
+You should use subprocess as seen in the negative selection project to run trailrepair.py with the appropriate arguments. We have included the necessary imports for doing so below. Note that you will need to parse the result.stdout (it is given as text with a newline character, so a direct comparison to, e.g., True will not work).
+
+NB: you will need to use something like the following: args = [sys.executable, 'trailrepair.py', '-g', str(graph), '--decay', str(decay), '--explore', str(explore)]
+
+result = run(args, stdout=PIPE, universal_newlines=True) The sys.executable argument is required, so that the subprocess you are calling has access to environment variables, which in this case, allow the code to resolve the location of the graph_tool library used by trailrepair.py (among other things).
+
+import sys
+import subprocess
+from subprocess import run, PIPE
+from io import StringIO
+
+def success_rate(graph, decay, explore):
+    '''
+    Function to find the success rate for a given graph topology.
+    Inputs: 
+        graph: graph topology, one of: [minimal | simple | medium | full | spanning | euroroad | chicago | uspower | paroad |caroad]
+        decay: fraction of pheromone that evaporates per time step
+        explore: probability that an ant takes an explore step
+    Output:
+        success_rate: average number of successes over 15 trials
+    '''
+    
+    # your code here
+    
+    return success_rate
+
+
+Question 2:
+Next, you will use the function you wrote in Question 1 to generate a heat map and use it to identify the explore and decay parameters that maximize the success rate. Write the function max_success(graph) that plots a heat map similar to that in the Chandrasekhar paper. The heat map will be 3×3 (10x10 is more realistic, but will not work on our course platform) and the parameter values will be in the following intervals, q(decay)∈[0.01, 0.30], using a step size of 0.145, and q(explore)∈[0.10, 0.40] using a step size of 0.15. The function will return a tuple (decay, explore) containing the values of q(decay) and q(explore) parameters that maximize the success rate.
+
+For the heatmap, we suggest using seaborn which will be included for you along with other packages that may be helpful. So, if you have an ndarray (3x3) from, for example, running shaped_success = np.reshape(success_array, (3,3)), you can call sns.heatmap(shaped_success) to visualize it.
+
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+import pandas as pd
+
+def max_success(graph):
+    print("running max_success()")
+    '''
+    Function that plots a heatmap of success rates and returns the parameters that maximize success.
+    Input:
+        graph: graph topology, one of: [minimal | simple | medium | full | spanning | euroroad | chicago | uspower | paroad |caroad]
+    Output:
+        decay_explore: tuple of decay and explore parameters that maximize success rate
+    '''
+    
+    # your code here
+
+    print("done")
+    return decay_explore
+
+n = max_success("minimal")
+assert (n == (0.01, 0.25) or n == (0.155, 0.25))
+
+print(n)
+
+### RUN THIS CELL
+min_decay_explorer = max_success("minimal")
+
+## don't edit this code
+with open('min_decay_explorer.txt','w') as output_file:
+    output_file.write(str(min_decay_explorer))
+
+### RUN THIS CELL
+sim_decay_explorer = max_success("simple")
+
+## don't edit this code
+with open('sim_decay_explorer.txt','w') as output_file:
+    output_file.write(str(sim_decay_explorer))
+
+### RUN THIS CELL
+med_decay_explorer = max_success("medium")
+
+## don't edit this code
+with open('med_decay_explorer.txt','w') as output_file:
+    output_file.write(str(med_decay_explorer))
