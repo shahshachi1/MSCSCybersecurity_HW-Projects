@@ -1,0 +1,216 @@
+Density Estimation and Classification Project
+Project Description
+The project focuses on a subset of the MNIST dataset containing images of digits "0" and "1". The project involves four tasks: feature extraction, parameter calculation, implementation of Naïve Bayes classifiers, and prediction of labels for the test data using the classifiers. Finally, calculating the accuracy of the predictions.
+
+Directions
+Preparation
+Access the link to your workspace through your Canvas course. You will be in the 'Project1’' Jupyter notebook through Ed Lesson. As you run the code, you will load the trainset and testset for digit0 and digit1 respectively (Please read the code and you will understand). Both trainset and testset are sub-dataset from the MNIST dataset. The MNIST dataset contains 70,000 images of handwritten digits, divided into 60,000 training images and 10,000 testing images. We use only a part of images for digit “0” and digit “1” in this question. 
+
+Therefore, we have the following statistics for the given dataset:  
+Number of samples in the training set: "0": 5000 ;"1": 5000
+Number of samples in the testing set: "0": 980; "1": 1135
+
+We assume that the prior probabilities are the same (P(Y=0) = P(Y=1) =0.5), although you may have noticed that these two digits have different numbers of samples in testing sets.
+
+ In the existing code, myID is a 4-digit string and please change this string to the last 4-digit of your own studentID; train0 is your trainset for digit0; train1 is your trainset for digit1; test0 is your testset for digit0; and test1 is your testset for digit1. They are all Numpy Arrays. You can also convert them into python arrays if you like. 
+
+Other than the string named 'myID', please do not change any existing code and just write your own logic with the existing code in the same notebook cell.
+
+You may go to the original MNIST dataset (available here http://yann.lecun.com/exdb/mnist/) to extract the images for digit 0 and digit 1, to form the dataset for this project. To ease your effort, we have also extracted the necessary images, and store them in “.mat” files. You may use the following piece of code to read the dataset: 
+
+import scipy.io
+Numpyfile= scipy.io.loadmat(‘matlabfile.mat’) 
+Files for you to download: “CSE 575_Project 1 Mat Files” (attached in the Project Overview page in the course) 
+
+The Ed notebook files and data can be downloaded by selecting the “Toggle Files” icon in the workspace (first option in the right corner)
+The location of the toggle button on an Ed lesson page. This is found in the middle left of the page and is accessed by selecting the Page icon.
+Programming
+For your own code logic, you have 4 tasks to do: 
+
+Task 1:
+You need to first extract features from your original trainset in order to convert the original data arrays to 2-Dimensional data points. You are required to extract the following two features for each image: 
+Feature1: The average brightness of each image (average all pixel brightness values within a whole image array) 
+Feature2: The standard deviation of the brightness of each image (standard deviation of all pixel brightness values within a whole image array) We assume that these two features are independent and that each image is drawn from a normal distribution. 
+We assume that these two features are independent and that each image is drawn from a normal distribution. 
+
+Task 2: 
+You need to calculate all the parameters for the two-class Naive Bayes (NB) classifiers respectively, based upon the 2-D data points you generated in Task 1 (In total, you should have 8 parameters). 
+Mean of feature1 for digit0 
+Variance of feature1 for digit0 
+Mean of feature2 for digit0 
+Variance of feature2 for digit0 
+Mean of feature1 for digit1
+Variance of feature1 for digit1 
+Mean of feature2 for digit1 
+Variance of feature2 for digit1 
+
+Task 3: 
+Since you get the NB classifiers' parameters from Task 2, you need to implement their calculation formula according to their Mathematical Expressions. Then you use your implemented classifiers to classify/predict all the unknown labels of newly coming data points (your test data points converted from your original testset for both digit0 and digit1). Thus, in this task, you need to work with the testset for digit0 and digit1 (2 Numpy Arrays: test0 and test1 mentioned above) and you need to predict all the labels of them. 
+Note: Remember to first convert your original 2 test data arrays (test0 and test1) into 2-D data points exactly the same way you did in Task 1. 
+Task 4:
+In Task 3 you successfully predicted the labels for all the test data, now you need to calculate the accuracy of your predictions for the testset for both digit0 and digit1 respectively. 
+
+Submission Directions for Project Deliverables
+Result Submission
+This will be auto-graded. We recommend that you test this project by clicking the Test button at the bottom right of your submission space. In order for your answers to be correctly registered in the system, you must place the code for your answers in the cell indicated for each question. In addition, you should submit the project with the output of the code in the cell's display area. The display area should contain only your answer to the question with no extraneous information, or else the answer may not be picked up correctly.
+
+Output:
+As the result from your Notebook of Project 1, you should have your ASUId(string), 8 components for computed parameters and 2 components for accuracy. The order of these 11 components are important and  should be a list as the following:
+['ASUId', Mean_of_feature1_for_digit0, Variance_of_feature1_for_digit0,
+Mean_of_feature2_for_digit0, Variance_of_feature2_for_digit0 ,
+Mean_of_feature1_for_digit1, Variance_of_feature1_for_digit1,
+Mean_of_feature2_for_digit1, Variance_of_feature2_for_digit1,
+Accuracy_for_digit0testset, Accuracy_for_digit1testset]
+
+Note: Your project to be graded has a set of comment line (ex: ### TEST FUNCTION: test_question1) at the beginning of the cell. This line is extremely important and must not be modified or removed.
+
+Report Submission
+This part of the project will be manually graded by the course team. Please feel free to share any of your experiences during the implementation with us if you like.
+Acceptable file types: .pdf
+Length of the report: Not more than 2 A4 pages.
+Content: 
+Add your name and student ID at the beginning of the file.
+Your observations and analysis of the project.
+
+Note: 
+Once you have completed the project, please submit the project by clicking the "Submit" button at the top right corner of your submission space. 
+By default, your latest submission report will be graded by the course team. If you want to decide on your other submission as the final and correct one, you can go to your submissions page and set the appropriate submission to final and you will be graded on that submission.
+
+
+Result Submission 
+This assignment will be auto-graded. You must complete and submit your work through Ed Lesson’s code challenges to receive credit for the course:
+In order for your answers to be correctly registered in the system, you must place the code for your answers in the cell indicated for each question. 
+You should submit the assignment with the output of the code in the cell's display area. The display area should contain only your answer to the question with no extraneous information, or else the answer may not be picked up correctly. 
+Each cell that is going to be graded has a set of comment lines (ex: ### TEST FUNCTION: test_question1) at the beginning of the cell. This line is extremely important and must not be modified or removed.
+After completing the notebook, run each code cell individually or click “Run All” at the top to print the outputs.
+When you are ready to submit your completed work, click on “Test” at the bottom right of the screen. 
+You will know you have successfully completed the assignment when feedback appears for each test case with a score.
+
+If needed: to resubmit the assignment in Ed Lesson 
+Edit your work in the notebook
+Run the code cells again
+Click “Test” at the bottom of the screen 
+Edit your work in the notebook  Run the code cells again  Click “Test” at the bottom of the screen 
+Your submission will be reviewed by the course team and then, after the due date has passed, your score will be populated from Ed Lesson into your Canvas grade.
+
+Report Submission
+Your report will be manually graded by the course team. You must submit your report in the designated code challenge workspace where you also submitted your results submission.
+Click the Plus (+) icon in the upper left corner of the notebook workspace (second icon from the left) 
+Select “Upload”
+Locate and select your report submission from your device (PDF file only)
+
+This image shows how to upload an image in ED Lesson. In the middle left of the screen there is a Plus icon. Select the plus icon and select upload. 
+Your file will appear in a left-pane menu that appears next to the notebook workspace
+Click “Submit” in the upper right corner to submit your completed project. 
+If needed: to resubmit the report in Ed Lesson 
+Click the “Toggle Files” icon in the upper left corner of the notebook (first icon from the left)
+Locate and right-click on your previous report submission file
+Click “Delete” to remove it from your attempt and then repeat the upload directions from Step 2
+This image shows how to delete or revise a submission. Select the Toggle (Page) icon from the middle of the notebook page. Select your submission and then select Delete.  
+Your latest report submission will be reviewed by the course team and then, after the due date has passed, your score will be populated from Ed Lesson into your Canvas grade.
+
+
+Evaluation
+Result Submission:
+
+Your work will be auto-graded and evaluated on. A total of sixty (60) points is available:
+10 points - Mean and variance of feature1 for digit0 
+10 points - Mean and variance of feature2 for digit0 
+10 points - Mean and variance of feature1 for digit1
+10 points - Mean and variance of feature2 for digit1
+10 points - Predicting new labels for digit0testset and calculating the accuracy.
+10 points - Predicting new labels for digit1testset and calculating the accuracy. 
+
+Note: The acceptable range for parameters is [x-0.2, x+0.2]; The acceptable range for accuracy is [x-0.005, x+0.005]. It means that if one of your float-number answers falls into its corresponding range, your answer will be graded as correct. No, otherwise.
+
+The report submission is worth forty (40) points. The report will be manually graded using a rubric and evaluated on: 
+10 points - Analysis is present
+20 points - Correct solution with no errors and documentation 
+10 points - Successful run with no errors
+
+
+
+
+Here is Project1.ipynb:
+
+import numpy
+import scipy.io
+import math
+import geneNewData
+
+def main():
+    myID='0900' #change to last 4 digit of your studentID
+    geneNewData.geneData(myID)
+    Numpyfile0 = scipy.io.loadmat('digit0_stu_train'+myID+'.mat')
+    Numpyfile1 = scipy.io.loadmat('digit1_stu_train'+myID+'.mat')
+    Numpyfile2 = scipy.io.loadmat('digit0_testset'+'.mat')
+    Numpyfile3 = scipy.io.loadmat('digit1_testset'+'.mat')
+    train0 = Numpyfile0.get('target_img')
+    train1 = Numpyfile1.get('target_img')
+    test0 = Numpyfile2.get('target_img')
+    test1 = Numpyfile3.get('target_img')
+    print([len(train0),len(train1),len(test0),len(test1)])
+    print('Your trainset and testset are generated successfully!')
+    pass
+
+
+if __name__ == '__main__':
+    main()
+
+
+Current Terminal Output:
+[5000, 5000, 980, 1135]
+Your trainset and testset are generated successfully!
+
+
+Note:
+Your output should be a list in the following format: [myID, Mean_of_feature1_for_digit0, Variance_of_feature1_for_digit0, Mean_of_feature2_for_digit0, Variance_of_feature2_for_digit0 , Mean_of_feature1_for_digit1, Variance_of_feature1_for_digit1, Mean_of_feature2_for_digit1, Variance_of_feature2_for_digit1, Accuracy_for_digit0testset, Accuracy_for_digit1testset]
+The order of these 11 components are important.
+Please print the result in the same cell that contains the comment "### TEST FUNCTION: test_question1" so that the autograder can capture your output and provide accurate feedback. Do not print anything else in the code cell below.
+You can divide the code into different cells but the output should be printed in the cell containing the comment "### TEST FUNCTION: test_question1"
+
+### TEST FUNCTION: test_question1
+
+
+Here is the geneNewData.py:
+import scipy.io
+import numpy as np
+import math
+
+
+def geneData(id):
+    numOfStudent = 300
+    index = int(id) % numOfStudent
+    Numpyfile0 = scipy.io.loadmat('data/train_0_img.mat')
+    Numpyfile1 = scipy.io.loadmat('data/train_1_img.mat')
+    train01 = Numpyfile0.get('target_img')
+    train02 = Numpyfile1.get('target_img')
+    train01 = np.transpose(train01, axes=[2, 0, 1])
+    train02 = np.transpose(train02, axes=[2, 0, 1])
+    np.random.seed(index)
+    np.random.shuffle(train01)
+    np.random.seed(index)
+    np.random.shuffle(train02)
+    newarr0 = train01[:5000]
+    newarr1 = train02[:5000]
+    filepath = 'stu_train' + id
+    scipy.io.savemat('digit0_stu_train' + id + '.mat', {'target_img': newarr0})
+    scipy.io.savemat('digit1_stu_train' + id + '.mat', {'target_img': newarr1})
+
+    Numpyfile2 = scipy.io.loadmat('data/test_0_img.mat')
+    Numpyfile3 = scipy.io.loadmat('data/test_1_img.mat')
+    test01 = Numpyfile2.get('target_img')
+    test02 = Numpyfile3.get('target_img')
+    test01 = np.transpose(test01, axes=[2, 0, 1])
+    test02 = np.transpose(test02, axes=[2, 0, 1])
+    filepath = 'testset'
+    scipy.io.savemat('digit0_testset.mat', {'target_img': test01})
+    scipy.io.savemat('digit1_testset.mat', {'target_img': test02})
+
+
+def main():
+    geneData(id)
+
+
+if __name__ == '__main__':
+    main()
