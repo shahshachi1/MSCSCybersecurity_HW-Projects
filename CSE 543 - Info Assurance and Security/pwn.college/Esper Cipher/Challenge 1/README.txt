@@ -1,5 +1,5 @@
 1. Copy files from /challenge/ folder (including the ciphertext.txt)
-2. Re-encrypt it correctly if need by by running:
+2. Re-encrypt it correctly if need be by running:
 	python esper.py -e plaintext.txt -o ciphertext.txt
 3. Verify the ciphertext:
 	ls -l ciphertext.txt
