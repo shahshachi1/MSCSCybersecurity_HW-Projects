@@ -8,6 +8,6 @@
 	python decrypt_esper.py -d ciphertext.txt -o esper_plaintext.txt -k rORTrfA -b 2
 5. Check if the ciphertext.txt is readable:
 	cat esper_plaintext.txt
-6. Final validation with challeneg.py
+6. Final validation with challenge.py
 	/challenge/challenge.py
 
