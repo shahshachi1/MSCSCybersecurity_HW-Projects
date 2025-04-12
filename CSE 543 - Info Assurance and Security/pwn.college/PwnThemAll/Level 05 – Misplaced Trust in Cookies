@@ -1,0 +1,213 @@
+Level 05 – Misplaced Trust in Cookies
+Vulnerability: Insecure access control via cookies
+● A cookie named “blacklist” can unlock new functionality.
+● Use the “-b” flag in curl to submit cookies.
+● Look for any hardcoded logic in scripts.
+● An altered cookie might allow you to retrieve hidden files.
+● Investigate cookies to control access to stored data.
+
+Here's the first page when accessing http://localhost:8000
+
+<html>
+  <head>
+   <title>Secret Password Storage</title></head>
+  <body>
+    <h1>Store your secret passwords</h1>
+    <p>Use this handy web applications to store all the passwords you use on the Internet!</p>
+    <p>Even for supersecure sites like www.bank.com!</p>
+    <form method="post" name="store" action="/cgi-bin/store">
+      <p>ID: <input type="text" name="id" /></p>
+      <p>Site: <input type="text" name="site" /></p>
+      <p>Username: <input type="text" name="username" /></p>
+      <p>Password: <input type="password" name="password" /></p>
+      <p><input type="submit" value="Submit your password" /></p>
+      <input type="hidden" name="admin" value="0"/>
+    </form>  
+    <h1>Retrieve your secret passwords</h1>
+    <form method="post" name="retrieve" action="/cgi-bin/retrieve">
+      <p>ID: <input type="text" name="id" /></p>
+      <p>Site: <input type="text" name="site" /></p>
+      <p><input type="submit" value="Retrieve your password" /></p>
+      <input type="hidden" name="admin" value="0"/>
+    </form>  
+   </body>
+ </html>
+
+
+When I saved a password I entered:
+ID: admin
+Sit: www.bank.com (because it's a hint from the first page)
+Username: test
+Password: test
+
+So in /cgi-bin/store 's page:
+<html>
+  <head>
+    <title>Password Storage</title>
+  </head>
+  <body>
+<p>Password saved.</p>
+  </body>
+</html>
+
+Then back in the first page I entered for retrieveal:
+ID: admin
+Site: www.bank.com
+
+So in /cgi-bin/retrieve 's page:
+<html>
+  <head>
+    <title>Password Retrieval</title>
+  </head>
+  <body>
+<pre>www.bank.com:test:test
+</pre>
+  </body>
+</html>
+
+
+I have noticed though in the first page there is this line:
+<input type="hidden" name="admin" value="0"/>
+
+I changed the value to 1:
+<input type="hidden" name="admin" value="1"/>
+
+Then I get a page that says "No cookies exist"
+So I added a cookie with the name "blacklist" as the hints stated but with no value.
+Then I went back to page 1 with ID being admin, Site being www.bank.com, with the value still being 1 <input type="hidden" name="admin" value="1"/>, added a cookie called blacklist and then got a page that printed "Non-existent cookie entries: site"
+So then I added a cookie with the name "site" with no value.
+Then I went back to page 1 with ID being admin, Site being www.bank.com, with the value still being 1 <input type="hidden" name="admin" value="1"/>, a cookie called blacklist, added a cookie called site, and then got a page that printed "Non existent cookie entreies: password"
+So then I added a cookie with the name "password" with no value
+Then I went back to page 1 with ID being admin, Site being www.bank.com, with the value still being 1 <input type="hidden" name="admin" value="1"/>, a cookie called blacklist, a cookie called site, and then got a page that printed "Wrong password."
+
+I got a hint saying that I need to name blacklist to either "store" or retrieve
+
+So setting black list to store like the following
+blacklist	"store"
+id	"admin"
+password	"test"
+site	"www.bank.com"
+username	"test"
+
+I hit the admin page for store:
+Blacklist:
+
+#!/usr/bin/python3
+import sys
+import cgi
+import random
+import os
+import tempfile
+from http import cookies
+#debugging
+#import cgitb; cgitb.enable()
+
+def die(s):
+    print("Content-Type: text/html")
+    print("")
+    print("""
+  
+    
+  
+  
+%s
+  
+""" % s)
+    sys.exit(0)
+
+
+form = cgi.FieldStorage()
+
+if "id" in form:
+    id = form["id"].value;
+else:
+    id = ""
+if "site" in form:
+    site = form["site"].value;
+else:
+    site = ""
+if "username" in form:
+    username = form["username"].value;
+else:
+    username = ""
+if "password" in form:
+    password = form["password"].value;
+else:
+    password = ""
+if "admin" in form:
+    admin = form["admin"].value;
+else:
+    admin = "0"
+
+debug = False
+if debug:
+    id = "foo1337"
+    site = "www.bar.com"
+    username = "john"
+    password = "pazzword"
+    admin = "1"
+
+if (id == "" or site == "" or username == "" or password == ""):
+    die("
+
+Missing parameters.
+")
+
+if not id.isalnum():
+    die("
+
+Bad id.
+")
+
+if admin == "1":
+    try:
+        blacklist = cookies.SimpleCookie(os.environ['HTTP_COOKIE'])['blacklist'].value
+    except Exception:
+        die("
+
+Malformed cookie or missing blacklist name
+")
+    if blacklist.isalnum() == False:
+        die("
+
+Bad blacklist name. It must be alphanumeric.
+")
+    try:
+        f = open(blacklist, "r")
+        m = f.read()
+        f.close()
+    except Exception as ex:
+        die("
+
+Cannot open blacklist file %s: %s
+" % (blacklist, str(e)))
+
+    die("
+
+Blacklist:
+
+%s
+
+" % m)
+
+try:
+    f = open("/challenge/storage/" + id, "a+")
+    f.write("%s:%s:%s\n" % (site, username, password))
+    f.close()
+except Exception as ex:
+    die("
+
+Something went horriby wrong (%s). Contact the admin.
+" % str(e))
+
+die("
+
+Password saved.
+")
+
+
+
+
+
+But I did the same for the retrieval by setting blacklist to "retrieve" but still got "Wrong Password." blacklist needs to be a file path
+

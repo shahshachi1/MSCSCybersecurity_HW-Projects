@@ -1,0 +1,31 @@
+Level 06 – Reflective Personality
+
+Vulnerability: Server-side Request Forgery (SSRF)
+● The server reflects your User-Agent; use this to your advantage.
+● Create a custom file that the server will fetch.
+● Think about how to exploit a file fetch through User-Agent.
+● Look for hidden files that might return useful data.
+● The server may act on your behalf—if convinced.
+
+At http://localhost:8000 it directed me to localhost:8000/cgi-bin/index.php with the following page when I used burp suite:
+<html>
+  <head>
+    <title>Browsers</title></head>
+  <body>
+  <h1>Personality test</h1>
+
+I guess you like Safari!
+  </body>
+</html>
+
+
+And when I use Firefox I got:
+<html>
+  <head>
+    <title>Browsers</title></head>
+  <body>
+  <h1>Personality test</h1>
+
+I guess you like Firefox!
+  </body>
+</html>

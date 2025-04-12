@@ -1,0 +1,46 @@
+Level 08 – Base64 and Beyond
+Vulnerability: Weak Authentication / Insecure Token Storage
+● Two-factor authentication is used but encoded in base64.
+● Decode the base64 string using tools like “base64” command.
+● The decoded string may contain the flag.
+● The value passed to the 2FA is not truly secure.
+● If something looks like gibberish, it might need decoding.
+
+
+
+Here's the first page
+<html>
+  <head>
+    <title>Home</title>
+  </head>
+  <body>
+    <form action="start.php" method="post">
+      <p>User: <input type="text" name="username"/></p>
+      <p>Password: <input type="password" name="password"/></p> 
+      <p><input type="submit" value="Submit"/>
+    </form>
+
+  </body>
+</html>
+
+<form action="2factor.php" method="post">
+  <p>2FA: <input type="text" name="factor" size=12 /></p>
+  <p><input type="submit" value="Submit"/></p>
+</form>
+
+Here elements show:
+<html>
+  <head></head>
+  <body>
+    <form action="2factor.php" method="post">
+      <p>
+        "2fA: "
+        <input type="text" name="factor" size="12">
+      </p>
+      <p> == $0
+        <input type="submit" value="Submit">
+      </p>
+    </form>
+    </form>
+  </body>
+</html>

