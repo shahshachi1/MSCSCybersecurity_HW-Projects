@@ -1,6 +1,6 @@
 1. Setup
 	- chmod +x prog
-	= chmod +x fuzzer.py
+	- chmod +x fuzzer.py
 
 2. Copy and paste into Terminal:
 	python3 -c "
