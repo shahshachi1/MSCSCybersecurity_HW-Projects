@@ -1,0 +1,33 @@
+Caesar Cipher Assignment - Solution Writeup
+
+Along with the provided files of the Caesar Cipher challenge; caesar.py, caesarkey.txt, challenge.py, and ciphertext.txt, I have created my own decipher.py script that deciphered the encrypted the ciphertext with the caesarkey. I have received the flag once running the challenge.
+
+My Key Extraction Logic:
+	- The script first reads the decryption key found from the file named caesarkey.txt
+	- It assumes they key is a single uppercase letter (e.g. K)
+	- That letter is extracted as the last word in the file
+	- It is then converted to a numerical shift value using the position in the English alphabet (K = 10, since 'A' = 0).
+		key_letter = key_line.split()[-1]
+		key_shift = string.ascii_uppercase.index(key_letter)
+	- This makes the script flexible in case the key file contains extra words or formatting — it reliably pulls the last word as the key.
+
+Ciphertext Handling:
+	- The encrypted message is read from ciphertext.txt.
+	- It is assumed to contain only uppercase letters with no punctuation or whitespace.
+	- The strip() function is used to remove any leading/trailing whitespace.
+
+Decryption Function:
+	- The script defines a caesar_decrypt() function.
+	- It loops through each character of the ciphertext:
+	- If the character is an uppercase letter, it is shifted backward in the alphabet using modular arithmetic 	((index - shift) % 26).
+	- Non-uppercase characters are passed through unchanged (although the problem states this shouldn’t happen).
+		if char in string.ascii_uppercase:
+    	decrypted_text += string.ascii_uppercase[(string.ascii_uppercase.index(char) - shift) % 26]
+	- This approach ensures that wraparound is handled correctly, so letters near the beginning of the alphabet decrypt properly.
+
+Output Generation:
+	- The resulting plaintext is written to caesarplaintext.txt in the same working directory.
+	- Since I do not have root permission within the /challenge directory, I had to run the challenge from the outside directory (where I had copied the /challenge scripts) and input the recently generated ceasarplaintext.txt file.
+	- I ran /challenge/challenge.py . where my ceasarplaintext.txt was the expected  input into the challenge directory, which outputted my flag for the challenge!
+
+
