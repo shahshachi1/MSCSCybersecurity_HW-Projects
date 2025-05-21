@@ -1,5 +1,0 @@
-1. Create do.py in parent folder of /challenge/
-2. Copy caesarkey.txt, ciphertext.txt, decipher.py, and thus created the caesarplaintext.txt files in the parent folder.
-3. Run decipher.py
-4. caesarplaintext.txt file is generated
-5. Run /challenge/challenge.py in the parent folder
