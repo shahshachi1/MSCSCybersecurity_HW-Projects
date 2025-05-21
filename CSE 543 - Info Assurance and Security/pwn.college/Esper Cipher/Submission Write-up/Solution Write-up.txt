@@ -1,0 +1,37 @@
+Esper Cipher Assignment - Solution Writeup
+
+Along with the provided files of the Esper Cipher challenge; challenge.py, ciphertext.txt esper.py, and experkey.txt, I have created my own decrypt_esper.py script that deciphered the encrypted the ciphertext with the experkey. I have received the flag once running the challenge.
+
+Overview:
+	- The Esper cipher encrypts binary data (such as plain text) by:
+		Rotating each byte left by a fixed number of bits.
+		Then XORing the result with a repeating key.
+	- Decryption reverses this process:
+		XOR first.
+		Then right-rotate the byte back to its original form.
+	- This custom scheme combines lightweight obfuscation (bit rotation) with basic symmetric encryption (XOR).
+
+Encryption Logic:
+	- The script uses a hardcoded key (rORTrfA) for encryption.
+	- Each byte is:
+		Rotated left by 2 bits.
+		XORed with a byte from the key sequence ([114, 79, 82, 84, 114, 102, 65]).
+	- The result is saved as ciphertext to a binary file.
+	- Although not required for the challenge, the encryption logic mirrors the decryption and is useful for understanding how the cipher was originally constructed.
+
+Decryption Logic:
+	- The script reads ciphertext.txt as raw binary data.
+	- The decryption key (e.g., "rORTrfA") is read via -k, and the number of rotation bits via -b.
+	- Each byte in the ciphertext is decrypted by:
+		XORing it with the corresponding character from the key.
+		Then performing a right-rotation by the specified number of bits to undo the original encryption.
+	- The output is saved as a binary file (e.g., esper_plaintext.txt), which is then validated.
+		decrypted_byte = ciphertext[i] ^ keyxor[i % len(keyxor)]
+		restored_byte = rrot(decrypted_byte, rotatebits)
+	- This logic ensures the original plaintext bytes are correctly recovered.
+
+Output Generation:
+	- I ran decrypt_esper.py and generated the esper_plaintext.txt file within the same working directory that I was working in.
+	- Since I do not have root permission within the /challenge directory, I had to run the challenge from the outside directory (where I had copied the /challenge scripts) and input the recently generated esper_plaintext.txt file.
+	- I ran /challenge/challenge.py . where my esper_plaintext.txt was the expected input into the challenge directory, which outputted my flag for the challenge!
+
